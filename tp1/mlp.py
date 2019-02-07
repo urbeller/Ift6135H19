@@ -3,11 +3,30 @@
 import numpy as np
 
 class NN:
-    def __init__(self,hidden_dims=(1024,2048), n_hidden=2):
-        self.n_hidden = n_hidden
+    def __init__(self,in_dim=784, hidden_dim=1024, out_dim=10, init_type='zero'):
+        self.init_type = init_type
+        self.w1 = None
+        self.w2 = None
+        self.b1 = None
+        self.b2 = None
+        self.input_dim = in_dim
+        self.hidden_dim = hidden_dim
+        self.output_dim = out_dim
+        self.initialize_weights()
 
-    def initialize_weights(self,n_hidden,dims):
-        pass
+    def initialize_weights(self):
+        self.b1 = np.zeros((1, self.input_dim))
+        self.b2 = np.zeros((1, self.output_dim))
+    
+        if self.init_type == 'gauss':
+            self.w1 = np.random.randn(self.input_dim, self.hidden_dim)
+            self.w2 = np.random.randn(self.hidden_dim, self.output_dim)
+
+        elif self.init_type == 'glorot':
+            pass
+        else:
+            self.w1 = np.zeros((self.input_dim, self.hidden_dim))
+            self.w2 = np.zeros((self.hidden_dim, self.output_dim))
 
     def forward(self,input,labels):
         pass
@@ -50,5 +69,5 @@ if __name__ == '__main__':
     _tr, _va, _te = np.load(args.datafile)
     tr=_tr[0]; va=_va[0]; te=_te[0]
     
-    mlp = NN()
-    print(mlp.softmax([1,4,8]))
+    mlp = NN(hidden_dim= 1024, init_type='gauss')
+    print(mlp.w1)
