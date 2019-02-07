@@ -19,7 +19,11 @@ class NN:
         pass
 
     def softmax(self,input):
-        pass
+        num = np.exp(input)
+        prob = num / np.sum(num, axis=0, keepdims=True)
+        
+        return prob
+
 
     def backward(self,cache,labels):
         pass
@@ -41,4 +45,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     _tr, _va, _te = np.load(args.datafile)
     tr=_tr[0]; va=_va[0]; te=_te[0]
-    print(tr.shape, va.shape, te.shape)
+    
+    mlp = NN()
+    print(mlp.softmax([1,4,8]))
