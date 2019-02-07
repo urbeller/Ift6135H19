@@ -13,7 +13,11 @@ class NN:
         pass
 
     def activation(self,input):
-        pass
+        z1 = input.dot(self.w1) + self.b1
+        a1 = np.tanh(z1)
+        output = a1.dot(self.w2) + b2
+
+        return output
 
     def loss(self,prediction):
         pass
