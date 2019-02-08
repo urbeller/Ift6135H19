@@ -12,6 +12,11 @@ class NN:
         self.hidden_dim = hidden_dim
         self.output_dim = out_dim
 
+    def num_params(self):
+        n  = 1
+        for a in (self.w1, self.w2, self.b1, self.b2):
+            n += a.shape[0] * a.shape[1]
+        return n
 
     def initialize_weights(self, init_type='zero'):
         self.b1 = np.zeros((1, self.hidden_dim))
@@ -68,7 +73,6 @@ class NN:
         train_labels = train_set[1]
 
         for epoch in range(n_epochs):
-            print("Epoch " , (epoch + 1))
             # SGD
             for i in range(0, train_data.shape[0], batch_size):
                 # Select batch.
@@ -91,10 +95,9 @@ class NN:
                 self.b1 -= lr * db1
                 self.w2 -= lr * dw2
                 self.b2 -= lr * db2
-            print("Loss=", self.loss(va_set[0], va_set[1]) )
 
     def test(self, test_set):
-        print("Final Test Loss=", self.loss(test_set[0], test_set[1]) )
+        return self.loss(test_set[0], test_set[1])
 
 if __name__ == '__main__':
     import argparse
@@ -104,8 +107,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
     train, valid, test = np.load(args.datafile)
     
-    mlp = NN(hidden_dim= 200, in_dim=784)
-    mlp.initialize_weights(init_type = 'gauss')
-    mlp.train(train, valid, 0.001, batch_size=200, n_epochs=10)
-    mlp.test(test)
+    for hsize in range(80,160,5):
+        print('# hidden :' , hsize)
+        mlp = NN(hidden_dim= hsize, in_dim=784)
+        mlp.initialize_weights(init_type = 'gauss')
+        mlp.train(train, valid, 0.001, batch_size=10, n_epochs=10)
+        print(mlp.test(test), mlp.num_params() / 1000000)
+
     #np.save('model.npy',(mlp.w1, mlp.b1, mlp.w2, mlp.b2))
