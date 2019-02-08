@@ -9,6 +9,7 @@ class NN:
         self.w2 = None
         self.b1 = None
         self.b2 = None
+        self.a1 = None # caches a1 for backprop.
         self.input_dim = in_dim
         self.hidden_dim = hidden_dim
         self.output_dim = out_dim
@@ -28,17 +29,17 @@ class NN:
             self.w1 = np.zeros((self.input_dim, self.hidden_dim))
             self.w2 = np.zeros((self.hidden_dim, self.output_dim))
 
-    def forward(self,input,labels):
-        pass
-
-    def activation(self,input):
+    def forward(self,input):
         z1 = input.dot(self.w1) + self.b1
-        a1 = np.tanh(z1)
-        output = a1.dot(self.w2) + b2
+        self.a1 = self.activation(z1)
+        output = self.a1.dot(self.w2) + b2
+        out_probs = self.softmax(output)
 
-        return output
+        return out_probs
 
-    def loss(self,prediction):
+    def activation(self,input): lambda x: np.tanh(x)
+
+    def loss(self,prediction, true_labels):
         pass
 
     def softmax(self,input):
@@ -52,12 +53,16 @@ class NN:
         pass
 
     def update(self,grads):
+        w1 += -self.lr * grads['w1']
+        b1 += -self.lr * grads['b1']
+        w2 += -self.lr * grads['w2']
+        b2 += -self.lr * grads['b2']
+
+
+    def train(self, train_set, va_set, lr):
         pass
 
-    def train(self):
-        pass
-
-    def test(self):
+    def test(self, test_set):
         pass
 
 if __name__ == '__main__':
