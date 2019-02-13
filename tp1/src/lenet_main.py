@@ -1,42 +1,47 @@
 #!/usr/bin/env python3
 import numpy as np
 import torch
+import torchvision
 import torch.optim as optim
+import torch.nn.functional as F
 from torchvision import datasets, transforms
+
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 
 from LeNet import LeNet
 
-def train(model, train_loader , loss_fn, optimizer):
-    losses = []
+def train(model, train_loader, optimizer):
+    model.train()
 
     # SGD iteration
+    total_loss = 0
     for idx, (X, Y) in enumerate(train_loader):
         optimizer.zero_grad()
         output = model(X)
-        loss = loss_fn(output, Y)
+        loss = F.nll_loss(output, Y, reduction='sum')
+        total_loss += loss.item()
         loss.backward()
         optimizer.step()
-        losses.append(loss.item())
         
-    return np.mean(losses)
+    return total_loss / len(train_loader.dataset)
 
-def validate(model, valid_loader, loss_fn):
-    losses = []
+def validate(model, valid_loader):
 
+    loss = 0
     model.eval()
-    for idx, (X, Y) in enumerate(valid_loader):
-        output = model(X)
-        loss = loss_fn(output, Y)
-        losses.append(loss.item())
+    with torch.no_grad():
+        for idx, (X, Y) in enumerate(valid_loader):
+            output = model(X)
+            loss += F.nll_loss(output, Y, reduction='sum').item()
 
-    return np.mean(losses)
+    return loss / len(valid_loader.dataset)
 
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--batch_size', type=int, default=10, help='mini-batch size')
+    parser.add_argument('--batch_size', type=int, default=10, help='train mini-batch size')
+    parser.add_argument('--valid_batch_size', type=int, default=1000, help='validatio mini-batch size')
     parser.add_argument('--epochs', type=int, default=10, help='number of epochs')
     parser.add_argument('--lr', type=float, default=0.001, help='learning rate')
 
@@ -44,31 +49,32 @@ if __name__ == '__main__':
 
     use_cuda = False
     kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
-    train_loader = torch.utils.data.DataLoader(
+
+    mnist_train = torch.utils.data.DataLoader(
         datasets.MNIST('../data', train=True, download=True,
                    transform=transforms.Compose([
                        transforms.ToTensor(),
                        transforms.Normalize((0.1307,), (0.3081,))
                    ])), batch_size=args.batch_size, shuffle=True, **kwargs)
 
-    test_loader = torch.utils.data.DataLoader(
+    mnist_test = torch.utils.data.DataLoader(
         datasets.MNIST('../data', train=False, transform=transforms.Compose([
                            transforms.ToTensor(),
                            transforms.Normalize((0.1307,), (0.3081,))
-                       ])), shuffle=True, **kwargs)
+                       ])), batch_size=args.valid_batch_size, shuffle=True, **kwargs)
 
 
     model = LeNet()
 
-    loss_fn = torch.nn.NLLLoss()
     optimizer = optim.SGD(model.parameters(), lr=args.lr)
     x_data = []
     tr_data = []
     va_data = []
 
+
     for epoch in range(args.epochs):
-        train_loss=train(model, train_loader, loss_fn, optimizer)
-        valid_loss=validate(model, test_loader, loss_fn)
+        train_loss=train(model, mnist_train, optimizer)
+        valid_loss=validate(model, mnist_test)
         x_data.append(epoch + 1)
         tr_data.append(train_loss)
         va_data.append(valid_loss)
