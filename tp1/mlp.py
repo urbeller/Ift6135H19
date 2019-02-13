@@ -40,11 +40,14 @@ class NN:
             d = np.sqrt(6 / (self.hidden_dims[1] + self.output_dim))
             self.w3 = np.random.uniform(-d, d, (self.hidden_dims[1], self.output_dim) )
 
-        else:
-            self.w1 = np.zeros((self.input_dim, self.hidden_dim))
-            self.w2 = np.zeros((self.hidden_dim, self.output_dim))
-            self.w3 = np.zeros((self.hidden_dim, self.output_dim))
-
+        elif init_type == 'zeros':
+            self.w1 = np.zeros((self.input_dim, self.hidden_dims[0]))
+            self.w2 = np.zeros((self.hidden_dims[0], self.hidden_dims[1]))
+            self.w3 = np.zeros((self.hidden_dims[1], self.output_dim))
+        else :
+            print('Unknown initialization type.')
+            quit()
+        
     def forward(self,input):
         z1 = input.dot(self.w1) + self.b1
         a1 = self.activation(z1)
@@ -53,14 +56,14 @@ class NN:
         z3 = a2.dot(self.w3) + self.b3
         out_probs = self.softmax(z3)
 
-        return out_probs
+        return (out_probs, a1, a2)
 
     def activation(self, x):
         return np.tanh(x)
 
     def loss(self,X, true_labels):
         data_size = X.shape[0]
-        pred = self.forward(X)
+        pred, a1, a2 = self.forward(X)
         logprobs = -np.log(pred[range(data_size),true_labels])
 
         return logprobs.mean()
@@ -91,7 +94,8 @@ class NN:
  
         return (dw3, db3, dw2,db2,dw1,db1)
 
-    def train(self, train_set, valid_set , lr=0.01, batch_size=100, n_epochs=10, log=True):
+    def train(self, train_set, valid_set , lr=0.01, batch_size=100, n_epochs=10, log=False):
+        stat = np.zeros((1, n_epochs))
         train_data = train_set[0]
         train_labels = train_set[1]
 
@@ -105,12 +109,7 @@ class NN:
 
                 # Fwd prop.
                 # We could have called forward() but let's save a function call !
-                z1 = X.dot(self.w1) + self.b1
-                a1 = self.activation(z1)
-                z2 = a1.dot(self.w2) + self.b2
-                a2 = self.activation(z2)
-                z3 = a2.dot(self.w3) + self.b3
-                pred = self.softmax(z3)
+                pred, a1, a2 = self.forward(X)
 
                 # Back prop
                 dw3,db3, dw2,db2,dw1,db1 = self.grads(X, pred, y, (a1,a2))
@@ -122,41 +121,46 @@ class NN:
                 self.b2 -= lr * db2
                 self.w3 -= lr * dw3
                 self.b3 -= lr * db3
+
+                stat[0][epoch] = self.loss(X,y)
+
             if log:
-                print('Epoch=', epoch+ 1, self.loss(X,y), self.accuracy(valid_set))
+                print('Epoch=', epoch + 1, self.loss(X,y), self.accuracy(valid_set))
+
+        return stat
         
     def test(self, test_set):
         return self.loss(test_set[0], test_set[1])
 
+
+    def check_grad(self, x, y, param_range, epsilon):
+        print(self.w2[param_range])
+        w2_bkp = np.copy(self.w2)
+        w2p = np.copy(self.w2)
+        w2n = np.copy(self.w2)
+
+        w2p[param_range] += epsilon
+        w2n[param_range] -= epsilon
+
+        self.w2 = np.copy(w2p)
+        loss_p = self.loss(x,y)
+
+        self.w2 = np.copy(w2n)
+        loss_n = self.loss(x,y)
+
+        grad_n = ((loss_p - loss_n) / (2 * epsilon))
+
+        self.w2 = np.copy(w2_bkp)
+
+        pred, a1, a2 = self.forward(x)
+        _, _, val, _, _, _ = self.grads(x, pred, y, (a1,a2))
+        grad_a = val[param_range]
+
+        return np.abs(grad_n - grad_a) 
+
     def accuracy(self, test_set):
-        y_hat = self.forward(test_set[0])
+        y_hat, a1, a2 = self.forward(test_set[0])
         pred_labels = np.argmax(y_hat, axis=1)
         correct_labels = (pred_labels==test_set[1]).sum()
         
         return correct_labels / test_set[0].shape[0]
-
-if __name__ == '__main__':
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--datafile', type=str, default=None, help='path to .npy data')
-
-    args = parser.parse_args()
-    train, valid, test = np.load(args.datafile)
-
-    '''
-    mlp = NN(hidden_dims=(300,100), in_dim=784)
-    mlp.initialize_weights(init_type = 'gauss')
-    mlp.train(train, valid, 0.01, batch_size=100, n_epochs=10)
-    print(mlp.test(test), mlp.num_params() / 1000000)
-    '''
-
-    for i in range(0,1,1):
-        print('# hidden :' , i)
-        mlp = NN(hidden_dims= (600,100), in_dim=784)
-        mlp.initialize_weights(init_type = 'glorot')
-        print('#params: ', mlp.num_params() / 1000000.0)
-        mlp.train(train, valid, 0.01, batch_size=50, n_epochs=10)
-        print('Validation error: ', mlp.test(valid) )
-
-    print('Test error: ', mlp.test(test), 'Accuracy : ', mlp.accuracy(test) * 100)
-    #np.save('model.npy',(mlp.w1, mlp.b1, mlp.w2, mlp.b2, mlp.w3, mlp.b3))
