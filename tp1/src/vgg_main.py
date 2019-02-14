@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import numpy as np
+import PIL
 import torch
 import torchvision
 import torch.optim as optim
@@ -30,7 +31,7 @@ def split_data(data_loader, valid_prop=0.1, bs=64):
 def load_images(batch_size=64, root="../data/cat_dog/trainset"):
 
     transform = transforms.Compose([
-        transforms.RandomRotation(15),
+        transforms.RandomRotation(20, resample=PIL.Image.BILINEAR),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
@@ -42,13 +43,15 @@ def load_images(batch_size=64, root="../data/cat_dog/trainset"):
     return data_loader  
 
 
-def train(model, train_loader, optimizer, epoch):
+def train(device, model, train_loader, optimizer, epoch):
     model.train()
 
     # SGD iteration
     total_loss = 0
     n_data = 0 
     for idx, (X, Y) in enumerate(train_loader):
+        X, Y = X.to(device), Y.to(device)
+
         optimizer.zero_grad()
         output = model(X)
         loss = F.nll_loss(output, Y, reduction='sum')
@@ -63,13 +66,14 @@ def train(model, train_loader, optimizer, epoch):
     return total_loss / n_data
 
 
-def validate(model, valid_loader):
+def validate(device, model, valid_loader):
 
     loss = 0
     n_data = 0
     model.eval()
     with torch.no_grad():
         for idx, (X, Y) in enumerate(valid_loader):
+            X, Y = X.to(device), Y.to(device)
             output = model(X)
             loss += F.nll_loss(output, Y).item() * X.size(0)
             n_data += X.size(0)
@@ -83,19 +87,24 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=64, help='train mini-batch size')
     parser.add_argument('--epochs', type=int, default=10, help='number of epochs')
     parser.add_argument('--lr', type=float, default=0.001, help='learning rate')
+    parser.add_argument('--use_cuda', type=bool, default=True, help='Use CUDA')
 
     args = parser.parse_args()
+
+    use_cuda = args.use_cuda and torch.cuda.is_available()
+    device = torch.device("cuda" if use_cuda else "cpu")
 
     data_loader=load_images(root="../data/cat_dog/trainset")
     test_loader=load_images(root="../data/cat_dog/testset")
 
     tr_loader, val_loader = split_data(data_loader, valid_prop = 0.1, bs=64)
 
-    model = Vgg(num_classes=2)
+    model = Vgg(num_classes=2).to( device )
     optimizer = optim.SGD(model.parameters(), lr=args.lr)
 
     for epoch in range(args.epochs):
-        train_loss = train(model, tr_loader, optimizer, epoch + 1)
-        valid_loss = validate(model, val_loader)
+        print("[", device, "] | ", end='')
+        train_loss = train(device, model, tr_loader, optimizer, epoch + 1)
+        valid_loss = validate(device, model, val_loader)
 
 
