@@ -24,7 +24,7 @@ class Vgg(nn.Module):
         self.conv12 = nn.Conv2d(512, 512, kernel_size=(3,3), padding=1)
         self.conv13 = nn.Conv2d(512, 512, kernel_size=(3,3), padding=1)
 
-        self.fc1 = nn.Linear(512 * 7 * 7, 4096)
+        self.fc1 = nn.Linear(512 * 8 * 8, 4096)
         self.fc2 = nn.Linear(4096, 4096)
         self.fc3 = nn.Linear(4096, num_classes)
 
@@ -44,15 +44,13 @@ class Vgg(nn.Module):
 
         x = F.relu( self.conv7( self.conv6( self.conv5(x) ) ) )
         x = F.max_pool2d(x, 2, 2)
-
         x = F.relu( self.conv10( self.conv9( self.conv8(x) ) ) )
-        x = F.max_pool2d(x, 2, 2)
-
+        #x = F.max_pool2d(x, 2, 2)
         x = F.relu( self.conv13( self.conv12( self.conv11(x) ) ) )
-        x = F.max_pool2d(x, 2, 2)
+        #x = F.max_pool2d(x, 2, 2)
 
         # Equivalent to 1x1 convolution.
-        x = x.view(-1, 512 * 7 * 7)
+        x = x.view(-1, 512 * 8 * 8)
 
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
