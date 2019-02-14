@@ -36,26 +36,30 @@ def train(model, train_loader, optimizer):
 
     # SGD iteration
     total_loss = 0
+    n_data = 0
     for idx, (X, Y) in enumerate(train_loader):
         optimizer.zero_grad()
         output = model(X)
-        loss = F.nll_loss(output, Y, reduction='sum')
+        loss = F.nll_loss(output, Y)
         loss.backward()
         optimizer.step()
-        total_loss += loss.item()
+        total_loss += loss.item() * X.size(0)
+        n_data += X.size(0)
         
-    return total_loss / len(train_loader.dataset)
+    return total_loss / n_data
 
 def validate(model, valid_loader):
 
     loss = 0
+    n_data = 0
     model.eval()
     with torch.no_grad():
         for idx, (X, Y) in enumerate(valid_loader):
             output = model(X)
-            loss += F.nll_loss(output, Y, reduction='sum').item()
+            loss += F.nll_loss(output, Y).item() * X.size(0)
+            n_data += X.size(0)
 
-        return loss / len(valid_loader.dataset)
+        return loss / n_data
 
 if __name__ == '__main__':
     import argparse
