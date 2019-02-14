@@ -1,3 +1,5 @@
+import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 
@@ -26,6 +28,13 @@ class Vgg(nn.Module):
         self.fc2 = nn.Linear(4096, 4096)
         self.fc3 = nn.Linear(4096, num_classes)
 
+
+        for l in [self.conv1, self.conv2, self.conv3, self.conv4, self.conv5, 
+                  self.conv6,  self.conv7, self.conv8,  self.conv9,  self.conv10,
+                  self.conv11, self.conv12, self.conv13, self.fc1, self.fc2, self.fc3]:
+            torch.nn.init.xavier_uniform_(l.weight)
+            torch.nn.init.zeros_(l.bias)
+    
     def forward(self, x):
         x = F.relu( self.conv2( self.conv1(x) ) )
         x = F.max_pool2d(x, 2, 2)
