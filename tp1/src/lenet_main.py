@@ -5,11 +5,31 @@ import torchvision
 import torch.optim as optim
 import torch.nn.functional as F
 from torchvision import datasets, transforms
+from torch.utils.data.sampler import SubsetRandomSampler
+from torch.utils.data import DataLoader
+
+
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 
 from LeNet import LeNet
+
+def split_data(data_loader, valid_prop=0.1, bs=64):
+    if(valid_prop > 1 or valid_prop < 0): 
+        valid_prop = 0
+        
+    split = int((1 - valid_prop) * len(data_loader.dataset))
+    index_list = list(range(len(data_loader.dataset)))
+    train_idx, valid_idx = index_list[:split], index_list[split:]
+    tr_sampler = SubsetRandomSampler(train_idx)
+    val_sampler = SubsetRandomSampler(valid_idx)
+
+    
+    train_loader = DataLoader(data_loader.dataset, batch_size=bs, sampler=tr_sampler)
+    valid_loader = DataLoader(data_loader.dataset, batch_size=bs, sampler=val_sampler)
+    
+    return (train_loader, valid_loader)
 
 def train(model, train_loader, optimizer):
     model.train()
@@ -20,9 +40,9 @@ def train(model, train_loader, optimizer):
         optimizer.zero_grad()
         output = model(X)
         loss = F.nll_loss(output, Y, reduction='sum')
-        total_loss += loss.item()
         loss.backward()
         optimizer.step()
+        total_loss += loss.item()
         
     return total_loss / len(train_loader.dataset)
 
@@ -35,13 +55,13 @@ def validate(model, valid_loader):
             output = model(X)
             loss += F.nll_loss(output, Y, reduction='sum').item()
 
-    return loss / len(valid_loader.dataset)
+        return loss / len(valid_loader.dataset)
 
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--batch_size', type=int, default=10, help='train mini-batch size')
-    parser.add_argument('--valid_batch_size', type=int, default=1000, help='validatio mini-batch size')
+    parser.add_argument('--batch_size', type=int, default=64, help='train mini-batch size')
+    parser.add_argument('--valid_batch_size', type=int, default=64, help='validatio mini-batch size')
     parser.add_argument('--epochs', type=int, default=10, help='number of epochs')
     parser.add_argument('--lr', type=float, default=0.001, help='learning rate')
 
@@ -64,6 +84,8 @@ if __name__ == '__main__':
                        ])), batch_size=args.valid_batch_size, shuffle=True, **kwargs)
 
 
+    train_data, valid_data = split_data(mnist_train, valid_prop=0.2, bs=args.batch_size)
+
     model = LeNet()
 
     optimizer = optim.SGD(model.parameters(), lr=args.lr)
@@ -73,8 +95,8 @@ if __name__ == '__main__':
 
 
     for epoch in range(args.epochs):
-        train_loss=train(model, mnist_train, optimizer)
-        valid_loss=validate(model, mnist_test)
+        train_loss=train(model, train_data, optimizer)
+        valid_loss=validate(model, valid_data)
         x_data.append(epoch + 1)
         tr_data.append(train_loss)
         va_data.append(valid_loss)
