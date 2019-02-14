@@ -13,6 +13,18 @@ class LeNet(nn.Module):
         self.fc1 = nn.Linear(60 * 4 * 4, 500)
         self.fc2 = nn.Linear(500, 10)
 
+        torch.nn.init.xavier_uniform_(self.conv1.weight)
+        torch.nn.init.zeros_(self.conv1.bias)
+
+        torch.nn.init.xavier_uniform_(self.conv2.weight)
+        torch.nn.init.zeros_(self.conv2.bias)
+
+        torch.nn.init.xavier_uniform_(self.fc1.weight)
+        torch.nn.init.zeros_(self.fc1.bias)
+
+        torch.nn.init.xavier_uniform_(self.fc2.weight)
+        torch.nn.init.zeros_(self.fc2.bias)
+
     def forward(self, x):
         x = F.relu( self.conv1(x))
         x = F.max_pool2d(x, 2, 2)
