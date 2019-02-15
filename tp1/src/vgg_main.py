@@ -100,6 +100,34 @@ def validate(device, model, valid_loader):
         return (loss / n_data, valid_acc / n_data)
 
 
+def test_data(device, model, loader):
+
+  out_list = np.empty(shape=[0,2])
+  model.eval()
+  with torch.no_grad():
+    for idx, (X, Y) in enumerate(loader):
+      X, Y = X.to(device), Y.to(device)
+      output = model(X)
+      out_list = np.append(out_list, output.data.cpu().numpy(), axis=0)
+
+  return np.exp(out_list)
+
+def label_result(pred, test_loader, labels_names):
+  labels_int=np.argmax(pred, axis=1)
+  labels_str = [labels_names[x] for x in labels_int.tolist()]
+  img_ids = [os.path.splitext(os.path.basename(path[0]))[0] for path in test_loader.dataset.imgs]
+  result = list(zip(img_ids,labels_str))
+  
+  result.sort(key=lambda tup: int(tup[0]))
+  
+  return result
+
+def to_csv(the_list,path):
+  with open(path,'w') as out:
+    csv_out=csv.writer(out)
+    csv_out.writerow(['id','label'])
+    for row in the_list:
+      csv_out.writerow(row)
 
 
 if __name__ == '__main__':
