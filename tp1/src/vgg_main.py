@@ -57,40 +57,49 @@ def load_test_images(batch_size=64, root="../data/cat_dog/trainset", **kwargs):
 
     return data_loader 
 
+
 def train(device, model, train_loader, optimizer):
     model.train()
 
     # SGD iteration
     total_loss = 0
-    n_data = 0 
+    n_data = 0
     for idx, (X, Y) in enumerate(train_loader):
-        X, Y = X.to(device), Y.to(device)
+        X, Y = Variable(X.to(device)), Variable(Y.to(device))
 
         optimizer.zero_grad()
         output = model(X)
         loss = F.nll_loss(output, Y)
         loss.backward()
         optimizer.step()
-        total_loss += loss.item() 
-
-        if idx % 30 == 0:
+        total_loss += loss.item() * X.size(0)
+        n_data += X.size(0)
+        
+        if idx % 400 == 0:
             print("\t\t\titeration : ", idx + 1, "/", len(train_loader), "\tLoss = ", loss.item())
 
-    return total_loss / len(train_loader.dataset)
+    return total_loss / n_data
 
 
 def validate(device, model, valid_loader):
 
     loss = 0
     n_data = 0
+    valid_acc = 0
     model.eval()
     with torch.no_grad():
         for idx, (X, Y) in enumerate(valid_loader):
             X, Y = X.to(device), Y.to(device)
             output = model(X)
-            loss += F.nll_loss(output, Y).item() 
+            loss += F.nll_loss(output, Y).item()  * X.size(0)
+            n_data += X.size(0)
+            
+            max_vals, max_indices = torch.max(output,1)
+            valid_acc += (max_indices == Y).cpu().sum().data.numpy()
 
-        return loss / len(valid_loader.dataset)
+        return (loss / n_data, valid_acc / n_data)
+
+
 
 
 if __name__ == '__main__':
