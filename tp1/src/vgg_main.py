@@ -140,28 +140,62 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    use_cuda = args.use_cuda and torch.cuda.is_available()
+
+    use_cuda = torch.cuda.is_available()
     kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
     device = torch.device("cuda" if use_cuda else "cpu")
 
     print("Loading and spliting data ... ", end='')
-    data_loader=load_images(root="../data/cat_dog/trainset", **kwargs)
-    test_loader=load_images(root="../data/cat_dog/testset", **kwargs)
+    data_loader=load_images(root="trainset/", batch_size=10, shuffle = True, **kwargs)
+    #test_loader=load_images(root="cat_dog/testset", batch_size=10, shuffle = False, **kwargs)
 
     tr_loader, val_loader = split_data(data_loader, valid_prop = 0.2, bs=10)
     print("done")
 
     print("Creating the model ... ", end='')
     model = Vgg(num_classes=2).to( device )
-    optimizer = optim.SGD(model.parameters(), lr=args.lr)
+    best_model = Vgg(num_classes=2).to( device )
+    optimizer = optim.SGD(model.parameters(), lr=1E-2)
     print("done")
 
 
-    model.load_state_dict(torch.load('model.pt'))
-    for epoch in range(args.epochs):
-        print("[", device, "] | ", "Epoch = ", epoch + 1)
-        train_loss = train(device, model, tr_loader, optimizer)
-        valid_loss = validate(device, model, val_loader)
-        
-        print("\t\t -->", train_loss, valid_loss)
+    ## Train
+    x_data = []
+    tr_data = []
+    va_data = []
 
+    best_acc = 0
+    for epoch in range(35):
+           print("[", device, "] | ", "Epoch = ", epoch + 1)
+           train_loss = train(device, model, tr_loader, optimizer)
+           (valid_loss, valid_accuracy) = validate(device, model, val_loader)
+           
+           if valid_accuracy > best_acc:
+              best_acc = valid_accuracy
+              torch.save(model.state_dict(), 'model.pt')
+              best_model.load_state_dict(model.state_dict())
+              
+           x_data.append(epoch + 1)
+           tr_data.append(train_loss)
+           va_data.append(valid_loss)
+            
+           print("\t\t -->", "Train Loss = ", train_loss, "Validation Loss = ", valid_loss, "Accuracy = ", valid_accuracy * 100)
+
+
+    ## Tests
+    test_loader=load_images(root="testset", batch_size=100, shuffle = False, **kwargs)   
+    out_l=test_data(device,best_model, test_loader)
+    result = label_result(out_l, test_loader, ['Cat','Dog'])
+    to_csv(result, 'cat_dog_submission.csv')
+
+    ## Plot error curves.
+    fig, ax = plt.subplots( nrows=1, ncols=1 )  # create figure & 1 axis
+    ax.plot(x_data, tr_data,  label='Training error')
+    ax.plot(x_data, va_data,  label='Validation error')
+
+    plt.xlabel('epoch', fontsize=10)
+    plt.ylabel('error', fontsize=10)
+    leg = ax.legend();
+
+    fig.savefig('cat_dog_error.png')   # save the figure to file
+    plt.close(fig)    # close the figure
