@@ -11,6 +11,8 @@ from torch.utils.data.sampler import SubsetRandomSampler
 
 from vgg import Vgg
 
+
+
 def split_data(data_loader, valid_prop=0.1, bs=64):
     if(valid_prop > 1 or valid_prop < 0): 
         valid_prop = 0
@@ -28,22 +30,34 @@ def split_data(data_loader, valid_prop=0.1, bs=64):
     return (train_loader, valid_loader)
 
 
-def load_images(batch_size=64, root="../data/cat_dog/trainset"):
+def load_images(batch_size=64, root="../data/cat_dog/trainset", shuffle=False, **kwargs):
 
     transform = transforms.Compose([
         transforms.RandomRotation(20, resample=PIL.Image.BILINEAR),
+        torchvision.transforms.RandomResizedCrop(64),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
 
     data_set = datasets.ImageFolder(root=root, transform=transform)
-    data_loader = torch.utils.data.DataLoader(data_set, batch_size=batch_size, shuffle=True, num_workers=2)
+    data_loader = torch.utils.data.DataLoader(data_set, batch_size=batch_size, shuffle=shuffle, **kwargs)
 
     return data_loader  
 
+def load_test_images(batch_size=64, root="../data/cat_dog/trainset", **kwargs):
 
-def train(device, model, train_loader, optimizer, epoch):
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
+
+    data_set = datasets.ImageFolder(root=root, transform=transform)
+    data_loader = torch.utils.data.DataLoader(data_set, batch_size=batch_size, shuffle=True, **kwargs)
+
+    return data_loader 
+
+def train(device, model, train_loader, optimizer):
     model.train()
 
     # SGD iteration
@@ -54,16 +68,15 @@ def train(device, model, train_loader, optimizer, epoch):
 
         optimizer.zero_grad()
         output = model(X)
-        loss = F.nll_loss(output, Y, reduction='sum')
+        loss = F.nll_loss(output, Y)
         loss.backward()
         optimizer.step()
-        total_loss += loss.item() * X.size(0)
-        n_data += X.size(0)
+        total_loss += loss.item() 
 
         if idx % 30 == 0:
-            print("Epoch = ",epoch, "\titeration : ", idx + 1, "/", len(train_loader), "\tLoss = ", loss.item())
+            print("\t\t\titeration : ", idx + 1, "/", len(train_loader), "\tLoss = ", loss.item())
 
-    return total_loss / n_data
+    return total_loss / len(train_loader.dataset)
 
 
 def validate(device, model, valid_loader):
@@ -75,10 +88,9 @@ def validate(device, model, valid_loader):
         for idx, (X, Y) in enumerate(valid_loader):
             X, Y = X.to(device), Y.to(device)
             output = model(X)
-            loss += F.nll_loss(output, Y).item() * X.size(0)
-            n_data += X.size(0)
+            loss += F.nll_loss(output, Y).item() 
 
-        return loss / n_data
+        return loss / len(valid_loader.dataset)
 
 
 if __name__ == '__main__':
@@ -92,19 +104,27 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     use_cuda = args.use_cuda and torch.cuda.is_available()
+    kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
     device = torch.device("cuda" if use_cuda else "cpu")
 
-    data_loader=load_images(root="../data/cat_dog/trainset")
-    test_loader=load_images(root="../data/cat_dog/testset")
+    print("Loading and spliting data ... ", end='')
+    data_loader=load_images(root="../data/cat_dog/trainset", **kwargs)
+    test_loader=load_images(root="../data/cat_dog/testset", **kwargs)
 
-    tr_loader, val_loader = split_data(data_loader, valid_prop = 0.1, bs=64)
+    tr_loader, val_loader = split_data(data_loader, valid_prop = 0.2, bs=10)
+    print("done")
 
+    print("Creating the model ... ", end='')
     model = Vgg(num_classes=2).to( device )
     optimizer = optim.SGD(model.parameters(), lr=args.lr)
+    print("done")
 
+
+    model.load_state_dict(torch.load('model.pt'))
     for epoch in range(args.epochs):
-        print("[", device, "] | ", end='')
-        train_loss = train(device, model, tr_loader, optimizer, epoch + 1)
+        print("[", device, "] | ", "Epoch = ", epoch + 1)
+        train_loss = train(device, model, tr_loader, optimizer)
         valid_loss = validate(device, model, val_loader)
-
+        
+        print("\t\t -->", train_loss, valid_loss)
 
