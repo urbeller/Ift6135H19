@@ -8,6 +8,13 @@ import torch.nn.functional as F
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
+import torch.nn as nn
+import torch.nn.functional as F
+from torch.autograd import Variable
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mtick
+import os
+import csv
 
 from vgg import Vgg
 
@@ -137,6 +144,8 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=10, help='number of epochs')
     parser.add_argument('--lr', type=float, default=0.001, help='learning rate')
     parser.add_argument('--use_cuda', type=bool, default=True, help='Use CUDA')
+    parser.add_argument('--trainset', type=str, default="", help='Path to train set')
+    parser.add_argument('--testset', type=str, default="", help='Path to test set')
 
     args = parser.parse_args()
 
@@ -146,8 +155,7 @@ if __name__ == '__main__':
     device = torch.device("cuda" if use_cuda else "cpu")
 
     print("Loading and spliting data ... ", end='')
-    data_loader=load_images(root="trainset/", batch_size=10, shuffle = True, **kwargs)
-    #test_loader=load_images(root="cat_dog/testset", batch_size=10, shuffle = False, **kwargs)
+    data_loader=load_images(root=args.trainset, batch_size=10, shuffle = True, **kwargs)
 
     tr_loader, val_loader = split_data(data_loader, valid_prop = 0.2, bs=10)
     print("done")
@@ -183,7 +191,7 @@ if __name__ == '__main__':
 
 
     ## Tests
-    test_loader=load_images(root="testset", batch_size=100, shuffle = False, **kwargs)   
+    test_loader=load_images(root=args.testset, batch_size=100, shuffle = False, **kwargs)   
     out_l=test_data(device,best_model, test_loader)
     result = label_result(out_l, test_loader, ['Cat','Dog'])
     to_csv(result, 'cat_dog_submission.csv')
