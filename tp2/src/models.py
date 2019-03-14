@@ -30,19 +30,41 @@ import matplotlib.pyplot as plt
 
 
 def clones(module, N):
-    "
-    A helper function for producing N identical layers (each with their own parameters).
-    
-    inputs: 
-        module: a pytorch nn.module
-        N (int): the number of copies of that module to return
+	"""
+	A helper function for producing N identical layers (each with their own parameters).
 
-    returns:
-        a ModuleList with the copies of the module (the ModuleList is itself also a module)
-    "
-    return nn.ModuleList([copy.deepcopy(module) for _ in range(N)])
+	inputs: 
+			module: a pytorch nn.module
+			N (int): the number of copies of that module to return
+
+	returns:
+			a ModuleList with the copies of the module (the ModuleList is itself also a module)
+	"""
+	return nn.ModuleList([copy.deepcopy(module) for _ in range(N)])
 
 # Problem 1
+class RNNLayer(nn.Module):
+	def __init(self, input_size, hidden_size, dp_keep_prob):
+			super(RNNLayer, self).__init__()
+
+			self.activation = nn.Tanh()
+			self.input_size = input_size
+			self.hidden_size = hidden_size
+			self.Wh = Parameter(torch.Tensor(hidden_size, hidden_size))
+			self.Wi = Parameter(torch.Tensor(input_size, hidden_size))
+			self.bh = Parameter(torch.Tensor(1,hidden_size))
+			self.drop = nn.Dropout(dp_keep_prob)
+
+	def init_weights():
+			nn.init.uniform_(self.Wh, a = -0.1, b = 0.1)
+			nn.init.uniform_(self.Wi, a = -0.1, b = 0.1)
+			nn.init.constant_(self.bh, 0.)
+
+	def forward(self, input, h_t_1):
+			h_t = self.activation( torch.mm(input, self.Wi) + torch.mm(h_t_1, Wh) + self.bh )
+
+			return h_t
+
 class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities.
   def __init__(self, emb_size, hidden_size, seq_len, batch_size, vocab_size, num_layers, dp_keep_prob):
     """
@@ -58,7 +80,10 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
     """
     super(RNN, self).__init__()
 
-    # TODO ========================
+		# Input layer should be [emb_size x hidden_size] the rest are [hidden_size x hidden_size]
+    self.layers = nn.ModuleList( RNNLayer(in_size, hidden_size) for in_size in [hidden_size if x > 0 else emb_size for x in range(num_layers) ] )
+    
+		# TODO ========================
     # Initialization of the parameters of the recurrent and fc layers. 
     # Your implementation should support any number of stacked hidden layers 
     # (specified by num_layers), use an input embedding layer, and include fully
@@ -77,6 +102,7 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
     # TODO ========================
     # Initialize all the weights uniformly in the range [-0.1, 0.1]
     # and all the biases to 0 (in place)
+    pass
 
   def init_hidden(self):
     # TODO ========================
@@ -166,7 +192,7 @@ class GRU(nn.Module): # Implement a stacked GRU RNN
 
   def init_weights_uniform(self):
     # TODO ========================
-
+    pass
   def init_hidden(self):
     # TODO ========================
     return # a parameter tensor of shape (self.num_layers, self.batch_size, self.hidden_size)
@@ -445,4 +471,3 @@ class MLP(nn.Module):
 
     def forward(self, x):
         return self.w_2(self.dropout(F.relu(self.w_1(x))))
-
