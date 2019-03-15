@@ -167,7 +167,7 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
                     shape: (num_layers, batch_size, hidden_size)
     """
     outputs = []
-    new_hidden = torch.Tensor(hidden.size(), device=hidden.device)
+    new_hidden = torch.Tensor(hidden.size()).to(hidden.device)
     for t, x_t in enumerate(inputs): #throught time
       y_l = self.Emb(x_t)
       
