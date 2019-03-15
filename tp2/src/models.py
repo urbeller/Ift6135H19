@@ -48,7 +48,6 @@ class RNNLayer(nn.Module):
   def __init__(self, input_size, hidden_size, dp_keep_prob):
     super(RNNLayer, self).__init__()
 
-    self.activation = nn.Tanh()
     self.input_size = input_size
     self.hidden_size = hidden_size
     self.Wh = Parameter(torch.Tensor(hidden_size, hidden_size))
@@ -58,12 +57,12 @@ class RNNLayer(nn.Module):
 
   def init_weights(self):
     s = 1.0/math.sqrt(self.hidden_size)
-    nn.init.uniform(self.Wh, a = -s, b = s)
-    nn.init.uniform(self.Wi, a = -s, b = s)
-    nn.init.constant(self.bh, 0.)
+    nn.init.uniform_(self.Wh, a = -s, b = s)
+    nn.init.uniform_(self.Wi, a = -s, b = s)
+    nn.init.constant_(self.bh, 0.)
 
   def forward(self, input, h_t_1):
-    h_t = self.activation( torch.mm(input, self.Wi) + torch.mm(h_t_1, self.Wh) + self.bh )
+    h_t = torch.tanh( torch.mm(input, self.Wi) + torch.mm(h_t_1, self.Wh) + self.bh )
 
     return h_t
 
@@ -124,8 +123,8 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
     # Init the output fc.
     for m in self.fc:
       if type(m) in [nn.Conv2d, nn.Linear]:
-        nn.init.uniform(m.weight,  a = -0.1, b = 0.1)
-        nn.init.constant(m.bias,  0.)
+        nn.init.uniform_(m.weight,  a = -0.1, b = 0.1)
+        nn.init.constant_(m.bias,  0.)
 
   def init_hidden(self):
     """
@@ -179,7 +178,7 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
         new_hidden[ndx] = y_l
 
       # Output FC.
-      y_l = F.tanh( self.fc(y_l) )
+      y_l = torch.tanh( self.fc(y_l) )
       outputs.append(y_l)
 
     logits = torch.cat(outputs)
