@@ -277,7 +277,7 @@ class GRU(nn.Module): # Implement a stacked GRU RNN
       hidden = torch.stack(new_hidden)
 
       # Output FC.
-      logits.append( torch.tanh( self.fc(y_l) ) )
+      logits.append( self.fc(y_l) )
 
     logits = torch.stack(logits)
 
