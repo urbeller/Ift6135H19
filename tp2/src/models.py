@@ -180,7 +180,7 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
       y_l = torch.tanh( self.fc(y_l) )
       outputs.append(y_l)
 
-    logits = torch.cat(outputs)
+    logits = torch.stack(outputs)
     return logits.view(self.seq_len, self.batch_size, self.vocab_size), hidden
 
   def generate(self, input, hidden, generated_seq_len):
