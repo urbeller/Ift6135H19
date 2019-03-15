@@ -53,7 +53,6 @@ class RNNLayer(nn.Module):
     self.Wh = Parameter(torch.Tensor(hidden_size, hidden_size))
     self.Wi = Parameter(torch.Tensor(input_size, hidden_size))
     self.bh = Parameter(torch.Tensor(1,hidden_size))
-    self.drop = nn.Dropout(dp_keep_prob)
 
   def init_weights(self):
     s = 1.0/math.sqrt(self.hidden_size)
@@ -62,7 +61,7 @@ class RNNLayer(nn.Module):
     nn.init.constant_(self.bh, 0.)
 
   def forward(self, input, h_t_1):
-    return torch.tanh( torch.mm(self.drop(input), self.Wi) + torch.mm(h_t_1, self.Wh) + self.bh )
+    return torch.tanh( torch.mm(input, self.Wi) + torch.mm(h_t_1, self.Wh) + self.bh )
 
 class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities.
   def __init__(self, emb_size, hidden_size, seq_len, batch_size, vocab_size, num_layers, dp_keep_prob):
