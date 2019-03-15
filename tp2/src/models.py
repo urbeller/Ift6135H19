@@ -187,6 +187,38 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
 
 
 # Problem 2
+class GRULayer(nn.Module):
+  def __init__(self, input_size, hidden_size):
+    super(GRULayer, self).__init__()
+
+    self.hidden_size = hidden_size
+
+    self.Wr = Parameter(torch.Tensor(input_size, hidden_size))
+    self.Ur = Parameter(torch.Tensor(hidden_size, hidden_size))
+    self.br = Parameter(torch.Tensor(1,hidden_size))
+
+    self.Wz = Parameter(torch.Tensor(input_size, hidden_size))
+    self.Uz = Parameter(torch.Tensor(hidden_size, hidden_size))
+    self.bz = Parameter(torch.Tensor(1,hidden_size))
+
+    self.Wh = Parameter(torch.Tensor(input_size, hidden_size))
+    self.Uh = Parameter(torch.Tensor(hidden_size, hidden_size))
+    self.bh = Parameter(torch.Tensor(1,hidden_size))
+
+  def init_weights(self):
+    s = 1.0 / math.sqrt(self.hidden_size)
+  
+    for t in [self.Wr, self.Ur, self.br,      self.Wz, self.Uz, self.bz,    self.Wh, self.Uh, self.bh]:
+      nn.init.uniform_(t, a = -s, b = s)
+
+
+  def forward(self, input, h_t_1):
+    r_t = torch.sigmoid( torch.mm(input, self.Wr) + torch.mm(h_t_1, self.Ur) + self.br)
+    z_t = torch.sigmoid( torch.mm(input, self.Wz) + torch.mm(h_t_1, self.Uz) + self.bz)
+    h_hat = torch.sigmoid( torch.mm(input, self.Wh) +  torch.mm(r_t * h_t_1, self.Uh) + self.bh)
+
+    return (1 - z_t) * h_t_1 + z_t * h_hat
+
 class GRU(nn.Module): # Implement a stacked GRU RNN
   """
   Follow the same instructions as for RNN (above), but use the equations for 
@@ -195,17 +227,60 @@ class GRU(nn.Module): # Implement a stacked GRU RNN
   def __init__(self, emb_size, hidden_size, seq_len, batch_size, vocab_size, num_layers, dp_keep_prob):
     super(GRU, self).__init__()
 
-    # TODO ========================
+    self.emb_size = emb_size
+    self.hidden_size = hidden_size
+    self.seq_len = seq_len
+    self.batch_size = batch_size
+    self.vocab_size = vocab_size
+    self.num_layers = num_layers
+
+		# Input layer should be [emb_size x hidden_size] the rest are [hidden_size x hidden_size]
+    self.layers = nn.ModuleList( [GRULayer(in_size, hidden_size) for in_size in [hidden_size if x > 0 else emb_size for x in range(num_layers) ] ] )
+
+    dropout_rate = 1 - dp_keep_prob
+    self.dropout = nn.Dropout(dropout_rate)
+
+    self.emb = nn.Embedding(vocab_size, emb_size)
+    self.fc = nn.Linear(hidden_size, vocab_size)
+
+    self.init_weights_uniform()
 
   def init_weights_uniform(self):
-    # TODO ========================
-    pass
+    # Init the stacked layers
+    for l in self.layers:
+      l.init_weights()
+
+    # Init the output fc.
+    nn.init.uniform_(self.fc.weight,  a = -0.1, b = 0.1)
+    nn.init.constant_(self.fc.bias,  0.)
+
+    nn.init.uniform_(self.emb.weight, -0.1, 0.1)
+
   def init_hidden(self):
-    # TODO ========================
-    return # a parameter tensor of shape (self.num_layers, self.batch_size, self.hidden_size)
+    return torch.zeros(self.num_layers, self.batch_size, self.hidden_size)
 
   def forward(self, inputs, hidden):
-    # TODO ========================
+    logits = []
+
+    embs = self.emb(inputs) # Input layer is embedding.
+
+    for xe in embs: #through time
+      
+      y_l = self.dropout(xe)
+      new_hidden = []
+
+      for ndx, layer in enumerate(self.layers): #through layers
+        y_hidden = layer(y_l, hidden[ndx])
+        y_l = self.dropout(y_hidden)
+        new_hidden.append( y_hidden )
+
+      hidden = torch.stack(new_hidden)
+
+      # Output FC.
+      logits.append( self.fc(y_l) )
+
+    logits = torch.stack(logits)
+
     return logits.view(self.seq_len, self.batch_size, self.vocab_size), hidden
 
   def generate(self, input, hidden, generated_seq_len):
