@@ -62,9 +62,7 @@ class RNNLayer(nn.Module):
     nn.init.constant_(self.bh, 0.)
 
   def forward(self, input, h_t_1):
-    h_t = torch.tanh( torch.mm(input, self.Wi) + torch.mm(h_t_1, self.Wh) + self.bh )
-
-    return h_t
+    return torch.tanh( torch.mm(input, self.Wi) + torch.mm(h_t_1, self.Wh) + self.bh )
 
 class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities.
   def __init__(self, emb_size, hidden_size, seq_len, batch_size, vocab_size, num_layers, dp_keep_prob):
