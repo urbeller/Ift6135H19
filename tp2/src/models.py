@@ -88,6 +88,9 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
 		# Input layer should be [emb_size x hidden_size] the rest are [hidden_size x hidden_size]
     self.layers = nn.ModuleList( [RNNLayer(in_size, hidden_size, dp_keep_prob) for in_size in [hidden_size if x > 0 else emb_size for x in range(num_layers) ] ] )
 
+    dropout_rate = 1 - dp_keep_prob
+    self.dropout = nn.Dropout(dropout_rate)
+
     self.Emb = nn.Embedding(vocab_size, emb_size)
     self.fc = nn.Sequential( 
 				nn.Dropout(dp_keep_prob),
@@ -166,21 +169,23 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
                     shape: (num_layers, batch_size, hidden_size)
     """
     outputs = []
-    new_hidden = torch.Tensor(hidden.size()).to(hidden.device)
-    for t, x_t in enumerate(inputs): #throught time
-      y_l = self.Emb(x_t)
+    new_hidden = []
+    logits = []
+    embs = self.Emb(inputs)
+    for xe in embs: #throught time
+      y_l = self.dropout(xe)
       
       for ndx, cell in enumerate(self.layers): #through layers
-        y_l = cell(y_l, hidden[ndx])
-        new_hidden[ndx] = y_l
+        y_hidden = cell(y_l, hidden[ndx])
+        new_hidden.append( y_hidden )
+        y_l = self.dropout(y_hidden)
 
-      hidden = new_hidden.clone()
+      hidden = torch.stack(new_hidden)
 
       # Output FC.
-      y_l = torch.tanh( self.fc(y_l) )
-      outputs.append(y_l)
+      logits.append(torch.tanh( self.fc(y_l) ))
 
-    logits = torch.stack(outputs)
+    logits = torch.stack(logits)
     return logits.view(self.seq_len, self.batch_size, self.vocab_size), hidden
 
   def generate(self, input, hidden, generated_seq_len):
