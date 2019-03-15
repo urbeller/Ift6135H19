@@ -215,7 +215,7 @@ class GRULayer(nn.Module):
   def forward(self, input, h_t_1):
     r_t = torch.sigmoid( torch.mm(input, self.Wr) + torch.mm(h_t_1, self.Ur) + self.br)
     z_t = torch.sigmoid( torch.mm(input, self.Wz) + torch.mm(h_t_1, self.Uz) + self.bz)
-    h_hat = torch.sigmoid( torch.mm(input, self.Wh) +  torch.mm(r_t * h_t_1, self.Uh) + self.bh)
+    h_hat = torch.tanh( torch.mm(input, self.Wh) +  torch.mm(r_t * h_t_1, self.Uh) + self.bh)
 
     return (1 - z_t) * h_t_1 + z_t * h_hat
 
