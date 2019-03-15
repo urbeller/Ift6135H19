@@ -55,10 +55,10 @@ class RNNLayer(nn.Module):
     self.bh = Parameter(torch.Tensor(1,hidden_size))
 
   def init_weights(self):
-    s = 1.0/math.sqrt(self.hidden_size)
+    s = 1.0 / math.sqrt(self.hidden_size)
     nn.init.uniform_(self.Wh, a = -s, b = s)
     nn.init.uniform_(self.Wi, a = -s, b = s)
-    nn.init.constant_(self.bh, 0.)
+    nn.init.uniform_(self.bh, a = -s, b = s)
 
   def forward(self, input, h_t_1):
     return torch.tanh( torch.mm(input, self.Wi) + torch.mm(h_t_1, self.Wh) + self.bh )
@@ -90,11 +90,8 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
     dropout_rate = 1 - dp_keep_prob
     self.dropout = nn.Dropout(dropout_rate)
 
-    self.Emb = nn.Embedding(vocab_size, emb_size)
-    self.fc = nn.Sequential( 
-				nn.Dropout(dp_keep_prob),
-        nn.Linear(hidden_size, vocab_size)
-				) 
+    self.emb = nn.Embedding(vocab_size, emb_size)
+    self.fc = nn.Linear(hidden_size, vocab_size)
 
     self.init_weights_uniform()
 
@@ -120,10 +117,11 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
       l.init_weights()
 
     # Init the output fc.
-    for m in self.fc:
-      if type(m) in [nn.Conv2d, nn.Linear]:
-        nn.init.uniform_(m.weight,  a = -0.1, b = 0.1)
-        nn.init.constant_(m.bias,  0.)
+    nn.init.uniform_(self.fc.weight,  a = -0.1, b = 0.1)
+    nn.init.constant_(self.fc.bias,  0.)
+
+    nn.init.uniform_(self.emb.weight, -0.1, 0.1)
+    
 
   def init_hidden(self):
     """
@@ -168,7 +166,7 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
                     shape: (num_layers, batch_size, hidden_size)
     """
     logits = []
-    embs = self.Emb(inputs)
+    embs = self.emb(inputs)
     for xe in embs: #throught time
       
       y_l = self.dropout(xe)
