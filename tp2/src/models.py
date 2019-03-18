@@ -349,7 +349,12 @@ and a linear layer followed by a softmax.
 
 #----------------------------------------------------------------------------------
 
-# TODO: implement this class
+
+def applyAttentionDotProduct(q, k, v, mask=None , drop=None):
+
+
+    pass
+
 class MultiHeadedAttention(nn.Module):
     def __init__(self, n_heads, n_units, dropout=0.1):
         """
@@ -365,10 +370,22 @@ class MultiHeadedAttention(nn.Module):
         assert n_units % n_heads == 0
         self.n_units = n_units 
 
-        # TODO: create/initialize any necessary parameters or layers
-        # Note: the only Pytorch modules you are allowed to use are nn.Linear 
-        # and nn.Dropout
-        
+        self.attention = None
+
+        # Linear models.
+        self.Wq = nn.Linear(n_units, n_units)
+        self.Wk = nn.Linear(n_units, n_units)
+        self.Wv = nn.Linear(n_units, n_units)
+        self.Wo = nn.Linear(n_units, n_units)
+
+        self.dropout = nn.Dropout(droupout)
+
+        # Initialization.
+        s = math.sqrt( 1.0 / n_units )
+        for m in self.Wq, self.Wk, self.Wv, self.Wo :
+            nn.init.uniform_(m.weight, -s, s)   
+            nn.init.uniform_(m.bias, -s, s)   
+
     def forward(self, query, key, value, mask=None):
         # TODO: implement the masked multi-head attention.
         # query, key, and value all have size: (batch_size, seq_len, self.n_units)
@@ -376,8 +393,21 @@ class MultiHeadedAttention(nn.Module):
         # As described in the .tex, apply input masking to the softmax 
         # generating the "attention values" (i.e. A_i in the .tex)
         # Also apply dropout to the attention values.
+        if mask is not None:
+            mask = mask.unsqueeze(1)
 
-        return # size: (batch_size, seq_len, self.n_units)
+        query = self.Wq(query)
+        key   = self.Wq(key)
+        value = self.Wq(value)
+
+        for e in query, key, value:
+            e = e.view(query.size(0), -1, self.n_heads, self.d_k).transpose(1,2)
+
+        xvec, self.attention = applyAttentionDotProduct(query, key, value, mask, self.dropout)
+
+        # Concat all x's.
+        x = xvec.transpose(1, 2).contiguous().view(query.size(0), -1, self.d_k * self.n_heads)
+        return self.Wo(x)
 
 
 
