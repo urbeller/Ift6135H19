@@ -369,8 +369,7 @@ class MultiHeadedAttention(nn.Module):
         # This requires the number of n_heads to evenly divide n_units.
         assert n_units % n_heads == 0
         self.n_units = n_units 
-
-        self.attention = None
+        self.n_heads = n_heads
 
         # Linear models.
         self.Wq = nn.Linear(n_units, n_units)
@@ -378,7 +377,7 @@ class MultiHeadedAttention(nn.Module):
         self.Wv = nn.Linear(n_units, n_units)
         self.Wo = nn.Linear(n_units, n_units)
 
-        self.dropout = nn.Dropout(droupout)
+        self.dropout = nn.Dropout(dropout)
 
         # Initialization.
         s = math.sqrt( 1.0 / n_units )
@@ -387,12 +386,6 @@ class MultiHeadedAttention(nn.Module):
             nn.init.uniform_(m.bias, -s, s)   
 
     def forward(self, query, key, value, mask=None):
-        # TODO: implement the masked multi-head attention.
-        # query, key, and value all have size: (batch_size, seq_len, self.n_units)
-        # mask has size: (batch_size, seq_len, seq_len)
-        # As described in the .tex, apply input masking to the softmax 
-        # generating the "attention values" (i.e. A_i in the .tex)
-        # Also apply dropout to the attention values.
         if mask is not None:
             mask = mask.unsqueeze(1)
 
@@ -403,7 +396,15 @@ class MultiHeadedAttention(nn.Module):
         for e in query, key, value:
             e = e.view(query.size(0), -1, self.n_heads, self.d_k).transpose(1,2)
 
-        xvec, self.attention = applyAttentionDotProduct(query, key, value, mask, self.dropout)
+
+        # Apply the scaled dot product.
+        score = torch.bmm(query, key.transpose(-2, -1)) / math.sqrt(self.d_k)
+        score = torch.unsqueeze(score, 1)
+        if mask is not None:
+            score = score.masked_fill(mask == 0, -1e9)
+
+        probs = self.dropout( F.softmax(score, dim = -1) )
+        xvec = torch.bmm(torch.squeeze(probs), value)
 
         # Concat all x's.
         x = xvec.transpose(1, 2).contiguous().view(query.size(0), -1, self.d_k * self.n_heads)
