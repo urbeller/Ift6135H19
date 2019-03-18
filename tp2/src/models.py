@@ -377,7 +377,7 @@ class MultiHeadedAttention(nn.Module):
         self.Wv = nn.Linear(n_units, n_units)
         self.Wo = nn.Linear(n_units, n_units)
 
-        self.dropout = nn.Dropout(dropout)
+        self.dropout = nn.Dropout(1.0 - dropout)
 
         # Initialization.
         s = math.sqrt( 1.0 / n_units )
