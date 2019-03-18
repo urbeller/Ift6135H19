@@ -350,10 +350,6 @@ and a linear layer followed by a softmax.
 #----------------------------------------------------------------------------------
 
 
-def applyAttentionDotProduct(q, k, v, mask=None , drop=None):
-
-
-    pass
 
 class MultiHeadedAttention(nn.Module):
     def __init__(self, n_heads, n_units, dropout=0.1):
@@ -386,28 +382,25 @@ class MultiHeadedAttention(nn.Module):
             nn.init.uniform_(m.bias, -s, s)   
 
     def forward(self, query, key, value, mask=None):
-        if mask is not None:
-            mask = mask.unsqueeze(1)
+        batch_size = query.size(0)
 
         query = self.Wq(query)
         key   = self.Wk(key)
         value = self.Wv(value)
 
         for e in query, key, value:
-            e = e.view(query.size(0), -1, self.n_heads, self.d_k).transpose(1,2)
-
+            e = e.view(batch_size, -1, self.n_heads, self.d_k).transpose(1,2)
 
         # Apply the scaled dot product.
-        score = torch.bmm(query, key.transpose(-2, -1)) / math.sqrt(self.d_k)
-        score = torch.unsqueeze(score, 1)
+        score = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(self.d_k)
         if mask is not None:
             score = score.masked_fill(mask == 0, -1e9)
 
         probs = self.dropout( F.softmax(score, dim = -1) )
-        xvec = torch.bmm(torch.squeeze(probs), value)
+        xvec = torch.matmul(probs, value)
 
         # Concat all x's.
-        x = xvec.transpose(1, 2).contiguous().view(query.size(0), -1, self.d_k * self.n_heads)
+        x = xvec.transpose(1, 2).contiguous().view(batch_size, -1, self.n_units)
         return self.Wo(x)
 
 
