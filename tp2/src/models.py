@@ -390,8 +390,8 @@ class MultiHeadedAttention(nn.Module):
             mask = mask.unsqueeze(1)
 
         query = self.Wq(query)
-        key   = self.Wq(key)
-        value = self.Wq(value)
+        key   = self.Wk(key)
+        value = self.Wv(value)
 
         for e in query, key, value:
             e = e.view(query.size(0), -1, self.n_heads, self.d_k).transpose(1,2)
