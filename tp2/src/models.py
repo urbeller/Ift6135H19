@@ -394,7 +394,6 @@ class MultiHeadedAttention(nn.Module):
         # Apply the scaled dot product.
         score = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(self.d_k)
         if mask is not None:
-            mask = mask.unsqueeze(1)
             score = score.masked_fill(mask == 0, -1e9)
 
         score = F.softmax(score) 
@@ -402,7 +401,7 @@ class MultiHeadedAttention(nn.Module):
         xvec = torch.matmul(probs, value)
 
         # Concat all x's.
-        x = xvec.transpose(1, 2).contiguous().view(batch_size, -1, self.n_units)
+        x = xvec.transpose(1, 2).contiguous().view(batch_size, -1, self.n_heads, self.d_k)
         return self.Wo(x)
 
 
