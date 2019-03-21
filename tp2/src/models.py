@@ -384,21 +384,23 @@ class MultiHeadedAttention(nn.Module):
     def forward(self, query, key, value, mask=None):
         batch_size = query.size(0)
 
-        query = self.Wq(query)
-        key   = self.Wk(key)
-        value = self.Wv(value)
+        q   = self.Wq(query).view(batch_size, -1, self.n_heads, self.d_k)
+        k   = self.Wk(key).view(batch_size, -1, self.n_heads, self.d_k)
+        v   = self.Wv(value).view(batch_size, -1, self.n_heads, self.d_k)
 
-        for e in query, key, value:
-            e = e.view(batch_size, -1, self.n_heads, self.d_k).transpose(1,2)
+        q = q.transpose(1, 2)
+        k = k.transpose(1, 2)
+        v = v.transpose(1, 2)
 
         # Apply the scaled dot product.
-        score = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(self.d_k)
+        score = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.d_k)
         if mask is not None:
+            mask = mask.unsqueeze(1)
             score = score.masked_fill(mask == 0, -1e9)
 
-        score = F.softmax(score) 
+        score = F.softmax(score, dim=-1) 
         probs = self.dropout( score )
-        xvec = torch.matmul(probs, value)
+        xvec = torch.matmul(probs, v)
 
         # Concat all x's.
         x = xvec.transpose(1, 2).contiguous().view(batch_size, -1, self.n_units)
