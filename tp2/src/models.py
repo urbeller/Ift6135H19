@@ -401,7 +401,7 @@ class MultiHeadedAttention(nn.Module):
         xvec = torch.matmul(probs, value)
 
         # Concat all x's.
-        x = xvec.transpose(1, 2).contiguous().view(batch_size, -1, self.n_heads, self.d_k)
+        x = xvec.transpose(1, 2).contiguous().view(batch_size, -1, self.n_units)
         return self.Wo(x)
 
 
