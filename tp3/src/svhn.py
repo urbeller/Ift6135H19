@@ -140,7 +140,6 @@ class VAE(nn.Module):
 
 
 def train(device, model, train_loader, epochs=100):
-  model.to(device)
   
   if device == 'cuda':
     latent_loss = nn.BCELoss().cuda()
@@ -184,11 +183,15 @@ if __name__ == "__main__":
 
   train_data, valid_data, test_data = get_data_loader("svhn", 32)
   vae = VAE(z_dim = z_dim)
+  vae.to(device)
   train(device, vae, train_data, epochs=epochs)
 
+  # Save model
+  torch.save(model.state_dict(), 'vae_model.pth')
+
+  # Get some samples
   sample = Variable(torch.randn(64, z_dim))
-  if using_cuda:
-    sample = sample.cuda()
+  sample.to(device)
 
   sample = vae.decode(sample).cpu()
-  save_image(sample.data.view(64, 1, 28, 28), 'results/sample.png')
+  save_image(sample.data.view(64, 3, 32, 32), 'results/sample.png')
