@@ -167,7 +167,9 @@ def train(device, model, train_loader, epochs=100):
 if __name__ == "__main__":
   use_cuda = torch.cuda.is_available()
   device = torch.device("cuda" if use_cuda else "cpu")
+  print("Using ", device)
+
   train_data, valid_data, test_data = get_data_loader("svhn", 32)
 
-  vae = VAE()
+  vae = VAE().to(device)
   train(device, vae, train_data, epochs=10)
