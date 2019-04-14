@@ -47,7 +47,7 @@ def get_data_loader(dataset_location, batch_size):
 
 
 class VAE(nn.Module):
-  def __init__(self, image_channels=3, h_dim=256, z_dim=32):
+  def __init__(self, image_channels=3, h_dim=256, z_dim=100):
     super(VAE, self).__init__()
 
     self.encoder = nn.Sequential(
