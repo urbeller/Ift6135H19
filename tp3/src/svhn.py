@@ -109,7 +109,6 @@ class VAE(nn.Module):
 
     self.z_dim = z_dim
     self.h_dim = h_dim
-    self.latent_loss = nn.
 
   def encode(self, x):
     conv_out = self.encoder(x)
