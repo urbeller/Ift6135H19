@@ -8,6 +8,7 @@ from torch.autograd import Variable
 from torch.nn import functional as F
 from torch.utils.data import dataset
 import torchvision.transforms as transforms
+from torchvision.utils import save_image
 
 import numpy as np
 
@@ -174,11 +175,20 @@ def train(device, model, train_loader, epochs=100):
     print("Epoch: ", epoch, "Loss=", train_loss)
 
 if __name__ == "__main__":
+  z_dim = 100
+  epochs = 10
   use_cuda = torch.cuda.is_available()
   device = torch.device("cuda" if use_cuda else "cpu")
+  using_cuda = (device == "cuda")
   print("Using ", device)
 
   train_data, valid_data, test_data = get_data_loader("svhn", 32)
+  vae = VAE(z_dim = z_dim)
+  train(device, vae, train_data, epochs=epochs)
 
-  vae = VAE()
-  train(device, vae, train_data, epochs=10)
+  sample = Variable(torch.randn(64, z_dim))
+  if using_cuda:
+    sample = sample.cuda()
+
+  sample = vae.decode(sample).cpu()
+  save_image(sample.data.view(64, 1, 28, 28), 'results/sample.png')
