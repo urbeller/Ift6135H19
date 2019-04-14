@@ -205,14 +205,16 @@ def q_1_4():
   f1_est = N(f0_x_tensor) * D_x / (1 - D_x)
 
 
-  r = D_x.detach().numpy() # evaluate xx using your discriminator; replace xx with the output
+  # Plot the discriminator output.
+  r = D_x.detach().numpy() 
   plt.figure(figsize=(8,4))
   plt.subplot(1,2,1)
   plt.plot(xx,r)
   plt.title(r'$D(x)$')
 
-  estimate = f1_est.detach().numpy() # estimate the density of distribution4 (on xx) using the discriminator; 
-                                  # replace "np.ones_like(xx)*0." with your estimate
+  estimate = f1_est.detach().numpy() 
+
+  # Plot the density.
   plt.subplot(1,2,2)
   plt.plot(xx,estimate)
   plt.plot(f(torch.from_numpy(xx)).numpy(), d(torch.from_numpy(xx)).numpy()**(-1)*N(xx))
@@ -221,7 +223,7 @@ def q_1_4():
   plt.show()
 
 if __name__ == '__main__':
-  q_1_3()
-  #q_1_4()
+  #q_1_3()
+  q_1_4()
 
 
