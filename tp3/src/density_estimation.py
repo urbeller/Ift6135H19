@@ -199,14 +199,12 @@ def q_1_4():
 
   batch_size=1000
   
-  f0 = samplers.distributionGaussian(batch_size)
-  f0_x = next(iter(f0))
-  f0_x_tensor = Variable( torch.from_numpy(np.float32(f0_x.reshape(batch_size, input_dim))) )
-  D_x = D(f0_x_tensor)
-  f1_est = (f0_x_tensor) * D_x / (1 - D_x)
-
-
   xx = np.linspace(-5,5,batch_size)
+  f0_x_tensor = Variable( torch.from_numpy(np.float32(xx.reshape(batch_size, input_dim))) )
+  D_x = D(f0_x_tensor)
+  f1_est = N(f0_x_tensor) * D_x / (1 - D_x)
+
+
   r = D_x.detach().numpy() # evaluate xx using your discriminator; replace xx with the output
   plt.figure(figsize=(8,4))
   plt.subplot(1,2,1)
@@ -223,30 +221,7 @@ def q_1_4():
   plt.show()
 
 if __name__ == '__main__':
-  #q_1_3()
-  q_1_4()
-
-"""
-  D = Discriminator(input_dim=input_dim, hidden_size=40, n_hidden=3)
-  train(D, p, q, loss_wd, batch_size=batch_size, epochs=1000)
-
-  px = next(iter(p))
-  qx = next(iter(q))
-  out = loss_wd(D, px, qx)
-  print(out)
-
-  plt.figure()
-  xx =  next(iter(p))
-  print(xx)
-  xx_tensor = torch.from_numpy(np.float32(xx.reshape(batch_size, input_dim))) 
-  r = D(xx_tensor).detach().numpy()
-  plt.figure(figsize=(8,4))
-  plt.subplot(1,2,1)
-  plt.plot(xx,r)
-  plt.title(r'$D(x)$')
-
-  plt.show()
-
-"""
+  q_1_3()
+  #q_1_4()
 
 
