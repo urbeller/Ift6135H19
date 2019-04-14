@@ -153,8 +153,8 @@ def train(device, model, train_loader, epochs=100):
 
       # Compute loss
       scaling_fact = X.shape[0] * X.shape[1] * X.shape[2] * X.shape[3]
-      recons_loss = F.binary_cross_entropy(recons, X)
-      recons_loss = nn.MSELoss(reduction="sum", recons, X)
+      #recons_loss = F.binary_cross_entropy(recons, X)
+      recons_loss = nn.MSELoss(recons, X, reduction="sum")
       kl_loss = -0.5 * torch.sum(1 + logvar - mu**2 - torch.exp(logvar))
       kl_loss /= scaling_fact
 
