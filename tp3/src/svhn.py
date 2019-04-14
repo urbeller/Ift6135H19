@@ -109,6 +109,7 @@ class VAE(nn.Module):
 
     self.z_dim = z_dim
     self.h_dim = h_dim
+    self.latent_loss = nn.
 
   def encode(self, x):
     conv_out = self.encoder(x)
@@ -139,8 +140,15 @@ class VAE(nn.Module):
 
 
 def train(device, model, train_loader, epochs=100):
-  model.train()
+  model.to(device)
+  
+  if device == 'cuda':
+    latent_loss = nn.BCELoss().cuda()
+  else:
+    latent_loss = nn.BCELoss()
 
+  model.train()
+  
   optim = torch.optim.Adam(model.parameters(), lr=0.001)
   train_loss = 0
 
@@ -154,11 +162,11 @@ def train(device, model, train_loader, epochs=100):
       # Compute loss
       scaling_fact = X.shape[0] * X.shape[1] * X.shape[2] * X.shape[3]
       #recons_loss = F.binary_cross_entropy(recons, X)
-      recons_loss = nn.MSELoss(recons, X, reduction="sum")
-      kl_loss = -0.5 * torch.sum(1 + logvar - mu**2 - torch.exp(logvar))
-      kl_loss /= scaling_fact
+      bce = latent_loss(recons, X, reduction="sum")
+      kl = -0.5 * torch.sum(1 + logvar - mu**2 - torch.exp(logvar))
+      kl /= scaling_fact
 
-      loss = recons_loss + kl_loss
+      loss = bce + kl
       loss.backward()
       train_loss += loss.item()
       optim.step()
@@ -172,5 +180,5 @@ if __name__ == "__main__":
 
   train_data, valid_data, test_data = get_data_loader("svhn", 32)
 
-  vae = VAE().to(device)
+  vae = VAE()
   train(device, vae, train_data, epochs=10)
