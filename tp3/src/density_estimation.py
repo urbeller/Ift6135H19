@@ -37,20 +37,26 @@ def computeGP(model, p, q):
 
   return (gradient_norm - 1)**2
 
-def loss_wd(model, p, q,lambda_fact = 10):
+def loss_wd(model, p, q,lambda_fact = 100):
+  p_out = model(p)
+  q_out = model(q)
   gp = computeGP(model, p, q)
-  return -(p.mean() - q.mean() - lambda_fact * gp.mean())
+  return -(p_out.mean() - q_out.mean() - lambda_fact * gp.mean())
 
 
 
-def loss_jsd(model, p, q):
-  return -(torch.log(torch.Tensor([2])) + 0.5 * torch.mean(torch.log(p)) + 0.5 * torch.mean(torch.log(1 - q)) )
+def loss_jsd(model, p, q, lambda_fact=0): #lambda_fact is dummy. used for signature compatibility
+  p_out = model(p)
+  q_out = model(q)
+  return -(torch.log(torch.Tensor([2])) + 0.5 * torch.mean(torch.log(p_out)) + 0.5 * torch.mean(torch.log(1 - q_out)) )
 
 
 
 
-def loss_gan(model, p, q):
-  return -( torch.mean(torch.log(p)) + torch.mean(torch.log(1 - q)) )
+def loss_gan(model, p, q, lambda_fact=0):
+  p_out = model(p)
+  q_out = model(q)
+  return -( torch.mean(torch.log(q_out)) + torch.mean(torch.log(1 - p_out)) )
 
 
 
@@ -99,7 +105,8 @@ class Discriminator(nn.Module):
 def train(model, p, q, loss_func, batch_size=512, epochs=1000, log=False):
   model.train()
 
-  optim = torch.optim.SGD(model.parameters(), lr=0.001)
+  #optim = torch.optim.SGD(model.parameters(), lr=0.001)
+  optim = torch.optim.Adam(model.parameters(), lr=0.001)
   dist_p = iter(p)
   dist_q = iter(q)
 
@@ -114,10 +121,8 @@ def train(model, p, q, loss_func, batch_size=512, epochs=1000, log=False):
 
     p_tensor = Variable( torch.from_numpy(np.float32(px.reshape(batch_size, model.input_dim))) )
     q_tensor = Variable( torch.from_numpy(np.float32(qx.reshape(batch_size, model.input_dim))) )
-    p_out = model(p_tensor)
-    q_out = model(q_tensor)
 
-    loss = loss_func(model, p_out, q_out)
+    loss = loss_func(model, p_tensor, q_tensor)
     loss.backward()
     optim.step()
 
@@ -132,20 +137,18 @@ def test_net(model, loss_fn, p, q, batch_size):
   qx = next(iter(q))
   p_tensor = Variable( torch.from_numpy(np.float32(px.reshape(batch_size, model.input_dim))) )
   q_tensor = Variable( torch.from_numpy(np.float32(qx.reshape(batch_size, model.input_dim))) )
-  p_out = model(p_tensor)
-  q_out = model(q_tensor)
 
-  return loss_fn(model, p_out, q_out)
+  return loss_fn(model, p_tensor, q_tensor, lambda_fact=50)
   
 def q_1_3():
-  epochs = 100
+  epochs = 1000
   batch_size=512
-  hidden_size = 32
+  hidden_size = 50
   n_hidden = 3
   input_dim = 2
   theta_list = np.linspace(-1, 1, 21, endpoint=True)
 
-  loss_fn = loss_jsd
+  loss_fn = loss_wd
   outputs = []
   for theta in theta_list:
     print("Theta = ", theta)
@@ -160,7 +163,7 @@ def q_1_3():
     out = test_net(D, loss_fn, p, q, batch_size)
 
     # Because we minimized the -loss, we must reinvert it here.
-    outputs.append( -out.item() )
+    outputs.append( out.item() )
 
   plt.figure()
 
@@ -169,11 +172,60 @@ def q_1_3():
   plt.plot(theta_list,outputs)
   plt.title(r'$D(x)$')
 
+  #plt.show()
+  plt.savefig('plot.png') 
+  plt.close()
+
+
+def q_1_4():
+  epochs = 1000
+  batch_size=512
+  hidden_size = 50
+  n_hidden = 3
+  input_dim = 1
+
+  loss_fn = loss_gan
+  f0 = samplers.distributionGaussian(batch_size)
+  f1 = samplers.distribution4(batch_size)
+
+  # Train
+  D = Discriminator(input_dim=input_dim, hidden_size=hidden_size, n_hidden=n_hidden)
+  train(D, f0, f1, loss_fn, batch_size=batch_size, epochs=epochs, log=True)
+
+  # Test
+  f = lambda x: torch.tanh(x*2+1) + x*0.75
+  d = lambda x: (1-torch.tanh(x*2+1)**2)*2+0.75
+  N = lambda x: np.exp(-x**2/2.)/((2*np.pi)**0.5)
+
+  batch_size=1000
+  
+  f0 = samplers.distributionGaussian(batch_size)
+  f0_x = next(iter(f0))
+  f0_x_tensor = Variable( torch.from_numpy(np.float32(f0_x.reshape(batch_size, input_dim))) )
+  D_x = D(f0_x_tensor)
+  f1_est = (f0_x_tensor) * D_x / (1 - D_x)
+
+
+  xx = np.linspace(-5,5,batch_size)
+  r = D_x.detach().numpy() # evaluate xx using your discriminator; replace xx with the output
+  plt.figure(figsize=(8,4))
+  plt.subplot(1,2,1)
+  plt.plot(xx,r)
+  plt.title(r'$D(x)$')
+
+  estimate = f1_est.detach().numpy() # estimate the density of distribution4 (on xx) using the discriminator; 
+                                  # replace "np.ones_like(xx)*0." with your estimate
+  plt.subplot(1,2,2)
+  plt.plot(xx,estimate)
+  plt.plot(f(torch.from_numpy(xx)).numpy(), d(torch.from_numpy(xx)).numpy()**(-1)*N(xx))
+  plt.legend(['Estimated','True'])
+  plt.title('Estimated vs True')
   plt.show()
 
 if __name__ == '__main__':
-  #input_dim = next(iter(p)).shape[1]
-  q_1_3()
+  #q_1_3()
+  q_1_4()
+
 """
   D = Discriminator(input_dim=input_dim, hidden_size=40, n_hidden=3)
   train(D, p, q, loss_wd, batch_size=batch_size, epochs=1000)
