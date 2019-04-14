@@ -5,6 +5,7 @@ from torch import nn
 import torchvision.datasets
 from torch.optim import Adam
 from torch.autograd import Variable
+from torch.nn import functional as F
 from torch.utils.data import dataset
 import torchvision.transforms as transforms
 
@@ -103,6 +104,7 @@ class VAE(nn.Module):
       nn.ELU(),
 
       nn.ConvTranspose2d(8, image_channels, 3, 1, 1),
+      nn.Sigmoid()
     )
 
     self.z_dim = z_dim
@@ -130,20 +132,37 @@ class VAE(nn.Module):
   def forward(self, x):
     mu, logvar = self.encode(x)
     latent = self.sample_latent(mu, logvar)
+    recons = self.decode(latent)
 
-    return self.decode(latent)
+    return recons, mu, logvar
 
 
 
-def train(device, model, train_loader):
+def train(device, model, train_loader, epochs=100):
   model.train()
 
   optim = torch.optim.Adam(model.parameters(), lr=0.001)
+  train_loss = 0
 
-  for idx, (X,Y) in enumerate(train_loader):
-    X = Variable(X.to(device))
-    img = model(X)
+  for epoch in range(epochs):
+    for idx, (X,Y) in enumerate(train_loader):
+      X = Variable(X.to(device))
 
+      optim.zero_grad()
+      recons, mu, logvar = model(X)
+
+      # Compute loss
+      scaling_fact = X.shape[0] * X.shape[1] * X.shape[2] * X.shape[3]
+      recons_loss = F.binary_cross_entropy(recons, X)
+      kl_loss = -0.5 * torch.sum(1 + logvar - mu**2 - torch.exp(logvar))
+      kl_loss /= scaling_fact
+
+      loss = recons_loss + kl_loss
+      loss.backward()
+      train_loss += loss.item()
+      optim.step()
+
+    print("Epoch: ", epoch, "Loss=", train_loss)
 
 if __name__ == "__main__":
   use_cuda = torch.cuda.is_available()
@@ -151,4 +170,4 @@ if __name__ == "__main__":
   train_data, valid_data, test_data = get_data_loader("svhn", 32)
 
   vae = VAE()
-  train(device, vae, train_data)
+  train(device, vae, train_data, epochs=10)
