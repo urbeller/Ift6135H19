@@ -31,10 +31,11 @@ def computeGP(model, p, q):
   return gradients_norm
 
 def loss_wd(model, p, q,lambda_fact = 10):
+  model.train()
   p_out = model(p)
   q_out = model(q)
   norm_vec = computeGP(model, p, q)
-  return -(torch.mean(p_out) - torch.mean(q_out) - lambda_fact * torch.mean(((norm_vec - 1)**2)))
+  return -(torch.mean(p_out) - torch.mean(q_out) - (lambda_fact * torch.mean(((norm_vec - 1)**2))) )
 
 
 
@@ -71,10 +72,10 @@ class Discriminator(nn.Module):
   def __init__(self, input_dim=10, hidden_size=20, n_hidden=3):
     super(Discriminator, self).__init__()
 
-    modules= [ nn.Linear(input_dim, hidden_size) ,  nn.Tanh() ]
+    modules= [ nn.Linear(input_dim, hidden_size) ,  nn.ReLU() ]
     for i in range(n_hidden - 1):
       modules.append(nn.Linear(hidden_size, hidden_size) )
-      modules.append(nn.Tanh())
+      modules.append(nn.ReLU())
 						
     modules.append(nn.Linear(hidden_size, 1) )
     modules.append(nn.Sigmoid())
@@ -131,17 +132,17 @@ def test_net(model, loss_fn, p, q, batch_size):
   p_tensor = Variable( torch.from_numpy(np.float32(px.reshape(batch_size, model.input_dim))) )
   q_tensor = Variable( torch.from_numpy(np.float32(qx.reshape(batch_size, model.input_dim))) )
 
-  return loss_fn(model, p_tensor, q_tensor, lambda_fact=10)
+  return loss_fn(model, p_tensor, q_tensor, lambda_fact=0)
   
 def q_1_3():
-  epochs = 1000
-  batch_size=512
+  epochs = 100
+  batch_size= 512
   hidden_size = 50
   n_hidden = 3
   input_dim = 2
   theta_list = np.linspace(-1, 1, 21, endpoint=True)
 
-  loss_fn = loss_wd
+  loss_fn = loss_jsd
   outputs = []
   for theta in theta_list:
     print("Theta = ", theta)
@@ -156,7 +157,7 @@ def q_1_3():
     out = test_net(D, loss_fn, p, q, batch_size)
    
     # Because we minimized the -loss, we must reinvert it here.
-    outputs.append( out.item() )
+    outputs.append( -out.item() )
 
   plt.figure()
 
@@ -213,10 +214,11 @@ def q_1_4():
   plt.plot(f(torch.from_numpy(xx)).numpy(), d(torch.from_numpy(xx)).numpy()**(-1)*N(xx))
   plt.legend(['Estimated','True'])
   plt.title('Estimated vs True')
-  plt.show()
+  plt.savefig('plot.png') 
+  plt.close()
 
 if __name__ == '__main__':
-  q_1_3()
-  #q_1_4()
+  #q_1_3()
+  q_1_4()
 
 
