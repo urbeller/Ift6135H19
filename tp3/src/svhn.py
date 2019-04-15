@@ -177,10 +177,12 @@ if __name__ == "__main__":
   import argparse
   parser = argparse.ArgumentParser()
   parser.add_argument('--use_model', type=str, default="", help='Path to a saved model')
+  parser.add_argument('--epochs', type=int, default=10, help='number of epochs')
+
   args = parser.parse_args()
 
   z_dim = 100
-  epochs = 10
+  epochs = arg.epochs
   use_cuda = torch.cuda.is_available()
   device = torch.device("cuda" if use_cuda else "cpu")
   using_cuda = (device == "cuda")
