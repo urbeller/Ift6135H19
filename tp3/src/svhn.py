@@ -47,6 +47,19 @@ def get_data_loader(dataset_location, batch_size):
   return trainloader, validloader, testloader
 
 
+def initialize_weights(net):
+  for m in net.modules():
+    print(m)
+    if isinstance(m, nn.Conv2d):
+      m.weight.data.normal_(0, 0.02)
+      m.bias.data.zero_()
+    elif isinstance(m, nn.ConvTranspose2d):
+      m.weight.data.normal_(0, 0.02)
+      m.bias.data.zero_()
+    elif isinstance(m, nn.Linear):
+      m.weight.data.normal_(0, 0.02)
+      m.bias.data.zero_()
+
 class VAE(nn.Module):
   def __init__(self, device, image_channels=3, h_dim=256, z_dim=100):
     super(VAE, self).__init__()
@@ -158,12 +171,15 @@ def train(device, model, train_loader, epochs=100):
   else:
     latent_loss = nn.BCEWithLogitsLoss()
 
+  initialize_weights(model)
   model.train()
   
   optim = torch.optim.Adam(model.parameters(), lr=0.001)
-  train_loss = 0
 
   for epoch in range(epochs):
+    
+    train_loss = 0
+
     for idx, (X,Y) in enumerate(train_loader):
       X = Variable(X.to(device))
 
