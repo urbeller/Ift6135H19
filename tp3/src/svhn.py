@@ -174,6 +174,11 @@ def train(device, model, train_loader, epochs=100):
     print("Epoch: ", epoch, "Loss=", train_loss)
 
 if __name__ == "__main__":
+  import argparse
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--use_model', type=str, default="", help='Path to a saved model')
+  args = parser.parse_args()
+
   z_dim = 100
   epochs = 10
   use_cuda = torch.cuda.is_available()
@@ -184,10 +189,15 @@ if __name__ == "__main__":
   train_data, valid_data, test_data = get_data_loader("svhn", 32)
   vae = VAE(z_dim = z_dim)
   vae.to(device)
-  train(device, vae, train_data, epochs=epochs)
+
+  if args.use_model =="":
+    train(device, vae, train_data, epochs=epochs)
+  else
+    vae.load_state_dict( args.use_model )
+    vae.eval()
 
   # Save model
-  torch.save(model.state_dict(), 'vae_model.pth')
+  torch.save(vae.state_dict(), 'vae_model.pth')
 
   # Get some samples
   sample = Variable(torch.randn(64, z_dim))
