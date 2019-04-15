@@ -134,7 +134,7 @@ def test_net(model, loss_fn, p, q, batch_size):
   return loss_fn(model, p_tensor, q_tensor, lambda_fact=10)
   
 def q_1_3():
-  epochs = 100
+  epochs = 1000
   batch_size=512
   hidden_size = 50
   n_hidden = 3

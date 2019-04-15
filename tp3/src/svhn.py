@@ -229,6 +229,7 @@ if __name__ == "__main__":
     train_data, valid_data, test_data = get_data_loader("svhn", 32)
     vae.to(device)
     train(device, vae, train_data, epochs=epochs)
+    torch.save(vae.state_dict(), 'vae_model_final.pth')
 
   else:
     sqrt_n_samples = 35
