@@ -73,9 +73,12 @@ class VAE(nn.Module):
     nn.ELU(),
     )
     
+    self.fc_enc = nn.Sequential(
+                nn.Linear(128 * 4 * 4, h_dim),
+                nn.Dropout(p=0.1),
+                nn.ELU()
+            )
 
-
-    self.fc_enc = nn.Linear(128 * 4 * 4, h_dim) 
     self.fc_mu = nn.Linear(h_dim, z_dim) 
     self.fc_logvar = nn.Linear(h_dim, z_dim) 
     self.fc_dec1 = nn.Linear(z_dim, h_dim) 
@@ -83,7 +86,6 @@ class VAE(nn.Module):
 
 
     self.decoder = nn.Sequential(
-      nn.ELU(),
       nn.ConvTranspose2d(128, 64, 4, 2, 1),
       nn.Dropout2d(p=0.1),
       nn.ELU(),
@@ -108,6 +110,15 @@ class VAE(nn.Module):
       nn.Sigmoid()
     )
 
+    self.fc_dec = nn.Sequential(
+                nn.Linear(z_dim, h_dim),
+                nn.Dropout(p=0.1),
+                nn.ELU(),
+                nn.Linear(h_dim, 128 * 4 * 4),
+                nn.Dropout(p=0.1),
+                nn.ELU()
+            )
+
     self.z_dim = z_dim
     self.h_dim = h_dim
 
@@ -118,9 +129,8 @@ class VAE(nn.Module):
     return self.fc_mu(h), self.fc_logvar(h)
 
   def decode(self, latent):
-    h = self.fc_dec1(latent.view(-1, self.z_dim))
-    h = self.fc_dec2(h).view(-1, 128, 4, 4)
-    output = self.decoder(h)
+    h = self.fc_dec(latent)
+    output = self.decoder(h.view(-1, 128, 4, 4))
 
     return output
 
