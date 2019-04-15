@@ -166,9 +166,9 @@ class VAE(nn.Module):
 def train(device, model, train_loader, epochs=100):
   
   if device == 'cuda':
-    latent_loss = nn.BCEWithLogitsLoss().cuda()
+    latent_loss = nn.BCELoss().cuda()
   else:
-    latent_loss = nn.BCEWithLogitsLoss()
+    latent_loss = nn.BCELoss()
 
   initialize_weights(model)
   model.train()
