@@ -190,11 +190,11 @@ def train(device, model, train_loader, epochs=100):
       #mse = latent_loss(recons, X)
 
       torch.clamp(recons, 0, 1)
-      bce = latent_loss(recons, X)
+      #bce = latent_loss(recons, X)
       kl = -0.5 * torch.sum(1 + logvar - mu**2 - torch.exp(logvar))
       kl /= scaling_fact
 
-      loss = bce + kl
+      loss = kl #bce + kl
       loss.backward()
       train_loss += loss.item()
       optim.step()
