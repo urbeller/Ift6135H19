@@ -135,8 +135,8 @@ class VAE(nn.Module):
     return output
 
   def sample_latent(self, mu, logvar):
-    std = logvar.mul(0.5).exp_()
-    epsilon = torch.empty_like(std).normal_()
+    std = torch.exp(0.5 * logvar)
+    epsilon = torch.randn_like(mu)
 
     return epsilon.mul(std).add_(mu)
 
