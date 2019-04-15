@@ -113,7 +113,7 @@ class VAE(nn.Module):
 
   def encode(self, x):
     conv_out = self.encoder(x)
-    h = self.fc_enc(conv_out.view(-1, 128))
+    h = self.fc_enc(conv_out.view(-1, 128 * 4 * 4))
 
     return self.fc_mu(h), self.fc_logvar(h)
 
