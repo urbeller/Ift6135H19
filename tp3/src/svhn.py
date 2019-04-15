@@ -149,10 +149,10 @@ class VAE(nn.Module):
     return output
 
   def sample_latent(self, mu, logvar):
-    std = torch.exp(0.5 * logvar)
-    epsilon = torch.randn_like(mu).to(self.device)
-
-    return epsilon.mul(std).add_(mu)
+    var = torch.exp(logvar)
+    std_z = torch.from_numpy(np.random.normal(0, 1, size=var.size())).type(torch.FloatTensor).to(self.device)
+    
+    return mu + var * Variable(std_z, requires_grad=False)
 
   def forward(self, x):
     mu, logvar = self.encode(x)
@@ -187,10 +187,7 @@ def train(device, model, train_loader, epochs=100):
 
       # Compute loss
       scaling_fact = X.shape[0] * X.shape[1] * X.shape[2] * X.shape[3]
-      #mse = latent_loss(recons, X)
 
-      torch.clamp(recons, 0, 1)
-      torch.clamp(X, 0, 1)
       bce = latent_loss(recons, X)
       kl = -0.5 * torch.sum(1 + logvar - mu**2 - torch.exp(logvar))
       kl /= scaling_fact
