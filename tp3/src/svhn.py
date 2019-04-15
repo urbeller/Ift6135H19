@@ -75,11 +75,11 @@ class VAE(nn.Module):
     
 
 
-    self.fc_enc = nn.Linear(128, h_dim) 
+    self.fc_enc = nn.Linear(128 * 4 * 4, h_dim) 
     self.fc_mu = nn.Linear(h_dim, z_dim) 
     self.fc_logvar = nn.Linear(h_dim, z_dim) 
     self.fc_dec1 = nn.Linear(z_dim, h_dim) 
-    self.fc_dec2 = nn.Linear(h_dim, 128) 
+    self.fc_dec2 = nn.Linear(h_dim, 128 * 4 * 4) 
 
 
     self.decoder = nn.Sequential(
