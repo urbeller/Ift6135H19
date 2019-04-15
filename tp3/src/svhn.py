@@ -192,9 +192,9 @@ if __name__ == "__main__":
   vae = VAE(z_dim = z_dim)
   vae.to(device)
 
-  if args.use_model =="":
+  if args.use_model == "" :
     train(device, vae, train_data, epochs=epochs)
-  else
+  else:
     vae.load_state_dict( args.use_model )
     vae.eval()
 
