@@ -182,7 +182,8 @@ if __name__ == "__main__":
   args = parser.parse_args()
 
   z_dim = 100
-  epochs = arg.epochs
+  epochs = args.epochs
+
   use_cuda = torch.cuda.is_available()
   device = torch.device("cuda" if use_cuda else "cpu")
   using_cuda = (device == "cuda")
