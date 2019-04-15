@@ -189,22 +189,25 @@ if __name__ == "__main__":
   using_cuda = (device == "cuda")
   print("Using ", device)
 
-  train_data, valid_data, test_data = get_data_loader("svhn", 32)
   vae = VAE(z_dim = z_dim)
-  vae.to(device)
 
   if args.use_model == "" :
+    train_data, valid_data, test_data = get_data_loader("svhn", 32)
+    vae.to(device)
     train(device, vae, train_data, epochs=epochs)
-  else:
-    vae.load_state_dict( args.use_model )
-    vae.eval()
 
-  # Save model
-  torch.save(vae.state_dict(), 'vae_model.pth')
+    # Save model
+    torch.save(vae.state_dict(), 'vae_model.pth')
+  else:
+    vae.load_state_dict(torch.load( args.use_model , map_location='cpu') )
+    vae.eval()
+    vae.to(device)
+
 
   # Get some samples
   sample = Variable(torch.randn(64, z_dim))
   sample.to(device)
 
   sample = vae.decode(sample).cpu()
-  save_image(sample.data.view(64, 3, 32, 32), 'results/sample.png')
+  print(sample.shape)
+  save_image(sample.data.view(4, 3, 32, 32), 'results/sample.png')
