@@ -18,37 +18,30 @@ import samplers
 Loss functions used for the questions.
 """
 def computeGP(model, p, q):
-  batch_size = p.shape[0]
+  size = p.shape[0]
+  a = torch.empty(size,1).uniform_(0,1)
+  z = a * p + (1 - a) * q
+  z.requires_grad = True
+  out = model(z)
 
-  # The interpolation
-  alpha = torch.rand(batch_size,1)
-  alpha = alpha.expand(-1,model.input_dim)
-  interp = Variable( alpha * p + (1 - alpha) * q, requires_grad = True)
+  gradients = grad(outputs=out, inputs=z, grad_outputs=torch.ones( out.size()), create_graph=True, only_inputs=True, retain_graph=True)[0]
+  gradients = gradients.view(gradients.size(0), -1)
+  gradients_norm = gradients.norm(2, dim=1)
 
-  # Get the interpolation through the model
-  out_interp = model(interp)
-  gradients = grad(outputs=out_interp, inputs=interp,
-                   grad_outputs=torch.ones(out_interp.size()),
-                   retain_graph=True, create_graph=True, only_inputs=True)[0]
+  return gradients_norm
 
-  # Mean/Expectation of gradients
-  gradients = gradients.view(gradients.size(0),  -1)
-  gradient_norm = gradients.norm(2, dim=1)
-
-  return (gradient_norm - 1)**2
-
-def loss_wd(model, p, q,lambda_fact = 100):
+def loss_wd(model, p, q,lambda_fact = 10):
   p_out = model(p)
   q_out = model(q)
-  gp = computeGP(model, p, q)
-  return -(p_out.mean() - q_out.mean() - lambda_fact * gp.mean())
+  norm_vec = computeGP(model, p, q)
+  return -(torch.mean(p_out) - torch.mean(q_out) - lambda_fact * torch.mean(((norm_vec - 1)**2)))
 
 
 
 def loss_jsd(model, p, q, lambda_fact=0): #lambda_fact is dummy. used for signature compatibility
   p_out = model(p)
   q_out = model(q)
-  return -(torch.log(torch.Tensor([2])) + 0.5 * torch.mean(torch.log(p_out)) + 0.5 * torch.mean(torch.log(1 - q_out)) )
+  return -(torch.log(torch.Tensor([[2]])) + 0.5 * torch.mean(torch.log(p_out)) + 0.5 * torch.mean(torch.log(1 - q_out)) )
 
 
 
@@ -138,10 +131,10 @@ def test_net(model, loss_fn, p, q, batch_size):
   p_tensor = Variable( torch.from_numpy(np.float32(px.reshape(batch_size, model.input_dim))) )
   q_tensor = Variable( torch.from_numpy(np.float32(qx.reshape(batch_size, model.input_dim))) )
 
-  return loss_fn(model, p_tensor, q_tensor, lambda_fact=50)
+  return loss_fn(model, p_tensor, q_tensor, lambda_fact=10)
   
 def q_1_3():
-  epochs = 1000
+  epochs = 100
   batch_size=512
   hidden_size = 50
   n_hidden = 3
@@ -161,7 +154,7 @@ def q_1_3():
 
     # Test
     out = test_net(D, loss_fn, p, q, batch_size)
-
+   
     # Because we minimized the -loss, we must reinvert it here.
     outputs.append( out.item() )
 
@@ -223,7 +216,7 @@ def q_1_4():
   plt.show()
 
 if __name__ == '__main__':
-  #q_1_3()
-  q_1_4()
+  q_1_3()
+  #q_1_4()
 
 

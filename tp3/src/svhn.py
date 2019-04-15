@@ -176,6 +176,7 @@ def train(device, model, train_loader, epochs=100):
   
   optim = torch.optim.Adam(model.parameters(), lr=0.001)
 
+  best_loss = 999999
   for epoch in range(epochs):
     
     train_loss = 0
@@ -202,6 +203,9 @@ def train(device, model, train_loader, epochs=100):
       optim.step()
 
     print("Epoch: ", epoch, "Loss=", train_loss)
+    if train_loss < best_loss:
+      best_loss = train_loss
+      torch.save(vae.state_dict(), 'vae_model.pth')
 
 if __name__ == "__main__":
   import argparse
@@ -226,17 +230,17 @@ if __name__ == "__main__":
     vae.to(device)
     train(device, vae, train_data, epochs=epochs)
 
-    # Save model
-    torch.save(vae.state_dict(), 'vae_model.pth')
   else:
+    sqrt_n_samples = 35
+    n_samples = sqrt_n_samples * sqrt_n_samples
     vae.load_state_dict(torch.load( args.use_model , map_location='cpu') )
     vae.eval()
     vae.to(device)
 
     # Get some samples
-    sample = Variable(torch.randn(64, z_dim))
+    sample = Variable(torch.randn(n_samples, z_dim))
     sample.to(device)
 
     sample = vae.decode(sample).cpu()
     print(sample.shape)
-    save_image(sample.data.view(64, 3, 32, 32), 'results/sample.png')
+    save_image(sample.data.view(n_samples, 3, 32, 32), 'results/sample.png', nrow= sqrt_n_samples )
