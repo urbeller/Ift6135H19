@@ -67,23 +67,24 @@ class VAE(nn.Module):
 
     self.encoder = nn.Sequential(
     nn.Conv2d(image_channels, 8, 3, 1, 1),
+    nn.BatchNorm2d(8),
     nn.ELU(),
-    nn.Dropout2d(p=0.1),
     nn.Conv2d(8, 16, 3, 2, 1),
+    nn.BatchNorm2d(16),
     nn.ELU(),
-    nn.Dropout2d(p=0.1),
 
     nn.Conv2d(16, 16, 3, 1, 1),
+    nn.BatchNorm2d(16),
     nn.ELU(),
-    nn.Dropout2d(p=0.1),
     nn.Conv2d(16, 32, 3, 2, 1),
+    nn.BatchNorm2d(32),
     nn.ELU(),
-    nn.Dropout2d(p=0.1),
 
     nn.Conv2d(32, 64, 3, 1, 1),
+    nn.BatchNorm2d(64),
     nn.ELU(),
-    nn.Dropout2d(p=0.1),
     nn.Conv2d(64, 128, 3, 2, 1),
+    nn.BatchNorm2d(128),
     nn.ELU()
     )
     
@@ -101,23 +102,23 @@ class VAE(nn.Module):
 
     self.decoder = nn.Sequential(
       nn.ConvTranspose2d(128, 64, 4, 2, 1),
-      nn.Dropout2d(p=0.1),
+      nn.BatchNorm2d(64),
       nn.ELU(),
 
       nn.ConvTranspose2d(64, 32, 3, 1, 1),
-      nn.Dropout2d(p=0.1),
+      nn.BatchNorm2d(32),
       nn.ELU(),
 
       nn.ConvTranspose2d(32, 16, 4, 2, 1),
-      nn.Dropout2d(p=0.1),
+      nn.BatchNorm2d(16),
       nn.ELU(),
 
       nn.ConvTranspose2d(16, 16, 3, 1, 1),
-      nn.Dropout2d(p=0.1),
+      nn.BatchNorm2d(16),
       nn.ELU(),
 
       nn.ConvTranspose2d(16, 8, 4, 2, 1),
-      nn.Dropout2d(p=0.1),
+      nn.BatchNorm2d(8),
       nn.ELU(),
 
       nn.ConvTranspose2d(8, image_channels, 3, 1, 1),
