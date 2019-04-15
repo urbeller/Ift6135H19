@@ -12,157 +12,8 @@ from torchvision.utils import save_image
 
 import numpy as np
 
-image_transform = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize((.5, .5, .5),
-                         (.5, .5, .5))
-])
-
-def get_data_loader(dataset_location, batch_size):
-  trainvalid = torchvision.datasets.SVHN(
-  dataset_location, split='train',
-  download=True, transform=image_transform)
-
-  trainset_size = int(len(trainvalid) * 0.9)
-  trainset, validset = dataset.random_split(
-  trainvalid,
-  [trainset_size, len(trainvalid) - trainset_size])
-
-  trainloader = torch.utils.data.DataLoader(
-  trainset,
-  batch_size=batch_size,
-  shuffle=True, num_workers=2)
-
-  validloader = torch.utils.data.DataLoader(
-  validset,
-  batch_size=batch_size,)
-
-  testloader = torch.utils.data.DataLoader(
-  torchvision.datasets.SVHN(
-  dataset_location, split='test',
-  download=True,
-  transform=image_transform),
-  batch_size=batch_size,)
-
-  return trainloader, validloader, testloader
-
-
-def initialize_weights(net):
-  for m in net.modules():
-    if isinstance(m, nn.Conv2d):
-      m.weight.data.normal_(0, 0.02)
-      m.bias.data.zero_()
-    elif isinstance(m, nn.ConvTranspose2d):
-      m.weight.data.normal_(0, 0.02)
-      m.bias.data.zero_()
-    elif isinstance(m, nn.Linear):
-      m.weight.data.normal_(0, 0.02)
-      m.bias.data.zero_()
-
-class VAE(nn.Module):
-  def __init__(self, device, image_channels=3, h_dim=256, z_dim=100):
-    super(VAE, self).__init__()
-
-    self.device = device
-
-    self.encoder = nn.Sequential(
-    nn.Conv2d(image_channels, 8, 3, 1, 1),
-    nn.BatchNorm2d(8),
-    nn.ELU(),
-    nn.Conv2d(8, 16, 3, 2, 1),
-    nn.BatchNorm2d(16),
-    nn.ELU(),
-
-    nn.Conv2d(16, 16, 3, 1, 1),
-    nn.BatchNorm2d(16),
-    nn.ELU(),
-    nn.Conv2d(16, 32, 3, 2, 1),
-    nn.BatchNorm2d(32),
-    nn.ELU(),
-
-    nn.Conv2d(32, 64, 3, 1, 1),
-    nn.BatchNorm2d(64),
-    nn.ELU(),
-    nn.Conv2d(64, 128, 3, 2, 1),
-    nn.BatchNorm2d(128),
-    nn.ELU()
-    )
-    
-    self.fc_enc = nn.Sequential(
-                nn.Linear(128 * 4 * 4, h_dim),
-                nn.Dropout(p=0.1),
-                nn.ELU()
-            )
-
-    self.fc_mu = nn.Linear(h_dim, z_dim) 
-    self.fc_logvar = nn.Linear(h_dim, z_dim) 
-    self.fc_dec1 = nn.Linear(z_dim, h_dim) 
-    self.fc_dec2 = nn.Linear(h_dim, 128 * 4 * 4) 
-
-
-    self.decoder = nn.Sequential(
-      nn.ConvTranspose2d(128, 64, 4, 2, 1),
-      nn.BatchNorm2d(64),
-      nn.ELU(),
-
-      nn.ConvTranspose2d(64, 32, 3, 1, 1),
-      nn.BatchNorm2d(32),
-      nn.ELU(),
-
-      nn.ConvTranspose2d(32, 16, 4, 2, 1),
-      nn.BatchNorm2d(16),
-      nn.ELU(),
-
-      nn.ConvTranspose2d(16, 16, 3, 1, 1),
-      nn.BatchNorm2d(16),
-      nn.ELU(),
-
-      nn.ConvTranspose2d(16, 8, 4, 2, 1),
-      nn.BatchNorm2d(8),
-      nn.ELU(),
-
-      nn.ConvTranspose2d(8, image_channels, 3, 1, 1),
-      nn.Sigmoid()
-    )
-
-    self.fc_dec = nn.Sequential(
-                nn.Linear(z_dim, h_dim),
-                nn.Dropout(p=0.1),
-                nn.ELU(),
-                nn.Linear(h_dim, 128 * 4 * 4),
-                nn.Dropout(p=0.1),
-                nn.ELU()
-            )
-
-    self.z_dim = z_dim
-    self.h_dim = h_dim
-
-  def encode(self, x):
-    conv_out = self.encoder(x)
-    h = self.fc_enc(conv_out.view(-1, 128 * 4 * 4))
-
-    return self.fc_mu(h), self.fc_logvar(h)
-
-  def decode(self, latent):
-    h = self.fc_dec(latent)
-    output = self.decoder(h.view(-1, 128, 4, 4))
-
-    return output
-
-  def sample_latent(self, mu, logvar):
-    var = torch.exp(logvar)
-    std_z = torch.from_numpy(np.random.normal(0, 1, size=var.size())).type(torch.FloatTensor).to(self.device)
-    
-    return mu + var * Variable(std_z, requires_grad=False)
-
-  def forward(self, x):
-    mu, logvar = self.encode(x)
-    latent = self.sample_latent(mu, logvar)
-    recons = self.decode(latent)
-
-    return recons, mu, logvar
-
-
+import models
+import utils
 
 def train(device, model, train_loader, epochs=100):
   
@@ -171,7 +22,7 @@ def train(device, model, train_loader, epochs=100):
   else:
     latent_loss = nn.BCELoss()
 
-  initialize_weights(model)
+  utils.initialize_weights(model)
   model.train()
   
   optim = torch.optim.Adam(model.parameters(), lr=0.001)
@@ -223,10 +74,10 @@ if __name__ == "__main__":
   using_cuda = (device == "cuda")
   print("Using ", device)
 
-  vae = VAE(device, z_dim = z_dim)
+  vae = models.VAE(device, z_dim = z_dim)
 
   if args.use_model == "" :
-    train_data, valid_data, test_data = get_data_loader("svhn", 32)
+    train_data, valid_data, test_data = utils.get_data_loader("svhn", 32)
     vae.to(device)
     train(device, vae, train_data, epochs=epochs)
     torch.save(vae.state_dict(), 'vae_model_final.pth')
