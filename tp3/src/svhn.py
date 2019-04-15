@@ -48,8 +48,10 @@ def get_data_loader(dataset_location, batch_size):
 
 
 class VAE(nn.Module):
-  def __init__(self, image_channels=3, h_dim=256, z_dim=100):
+  def __init__(self, device, image_channels=3, h_dim=256, z_dim=100):
     super(VAE, self).__init__()
+
+    self.device = device
 
     self.encoder = nn.Sequential(
     nn.Conv2d(image_channels, 8, 3, 1, 1),
@@ -136,7 +138,7 @@ class VAE(nn.Module):
 
   def sample_latent(self, mu, logvar):
     std = torch.exp(0.5 * logvar)
-    epsilon = torch.randn_like(mu)
+    epsilon = torch.randn_like(mu).to(self.device)
 
     return epsilon.mul(std).add_(mu)
 
@@ -172,7 +174,7 @@ def train(device, model, train_loader, epochs=100):
       scaling_fact = X.shape[0] * X.shape[1] * X.shape[2] * X.shape[3]
       #recons_loss = F.binary_cross_entropy(recons, X)
       #mse = latent_loss(recons, X, reduction="sum")
-      print(recons.shape, X.shape)
+
       bce = latent_loss(recons, X)
       kl = -0.5 * torch.sum(1 + logvar - mu**2 - torch.exp(logvar))
       kl /= scaling_fact
@@ -200,7 +202,7 @@ if __name__ == "__main__":
   using_cuda = (device == "cuda")
   print("Using ", device)
 
-  vae = VAE(z_dim = z_dim)
+  vae = VAE(device, z_dim = z_dim)
 
   if args.use_model == "" :
     train_data, valid_data, test_data = get_data_loader("svhn", 32)
