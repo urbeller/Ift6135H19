@@ -49,7 +49,6 @@ def get_data_loader(dataset_location, batch_size):
 
 def initialize_weights(net):
   for m in net.modules():
-    print(m)
     if isinstance(m, nn.Conv2d):
       m.weight.data.normal_(0, 0.02)
       m.bias.data.zero_()
