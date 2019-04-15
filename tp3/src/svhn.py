@@ -154,9 +154,9 @@ class VAE(nn.Module):
 def train(device, model, train_loader, epochs=100):
   
   if device == 'cuda':
-    latent_loss = nn.MSELoss().cuda()
+    latent_loss = nn.MSELoss(reduction="sum").cuda()
   else:
-    latent_loss = nn.MSELoss()
+    latent_loss = nn.MSELoss(reduction="sum")
 
   model.train()
   
