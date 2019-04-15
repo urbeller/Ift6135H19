@@ -14,7 +14,7 @@ import numpy as np
 
 
 class VAE(nn.Module):
-  def __init__(self, device, image_channels=3, h_dim=256, z_dim=100):
+  def __init__(self, device, image_channels=3, h_dim=1024, z_dim=100):
     super(VAE, self).__init__()
 
     self.device = device
