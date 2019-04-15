@@ -44,7 +44,7 @@ class VAE(nn.Module):
     
     self.fc_enc = nn.Sequential(
                 nn.Linear(128 * 4 * 4, h_dim),
-                nn.Dropout(p=0.1),
+                nn.BatchNorm2d(h_dim),
                 nn.ELU()
             )
 
@@ -81,10 +81,10 @@ class VAE(nn.Module):
 
     self.fc_dec = nn.Sequential(
                 nn.Linear(z_dim, h_dim),
-                nn.Dropout(p=0.1),
+                nn.BatchNorm2d(h_dim),
                 nn.ELU(),
                 nn.Linear(h_dim, 128 * 4 * 4),
-                nn.Dropout(p=0.1),
+                nn.BatchNorm2d(128 * 4 * 4),
                 nn.ELU()
             )
 
