@@ -154,9 +154,9 @@ class VAE(nn.Module):
 def train(device, model, train_loader, epochs=100):
   
   if device == 'cuda':
-    latent_loss = nn.BCELoss().cuda()
+    latent_loss = nn.MSELoss().cuda()
   else:
-    latent_loss = nn.BCELoss()
+    latent_loss = nn.MSELoss()
 
   model.train()
   
@@ -173,13 +173,13 @@ def train(device, model, train_loader, epochs=100):
       # Compute loss
       scaling_fact = X.shape[0] * X.shape[1] * X.shape[2] * X.shape[3]
       #recons_loss = F.binary_cross_entropy(recons, X)
-      #mse = latent_loss(recons, X, reduction="sum")
+      mse = latent_loss(recons, X)
 
-      bce = latent_loss(recons, X)
+      #bce = latent_loss(recons, X)
       kl = -0.5 * torch.sum(1 + logvar - mu**2 - torch.exp(logvar))
       kl /= scaling_fact
 
-      loss = bce + kl
+      loss = mse + kl
       loss.backward()
       train_loss += loss.item()
       optim.step()
