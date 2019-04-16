@@ -11,6 +11,7 @@ import torchvision.transforms as transforms
 from torchvision.utils import save_image
 
 import numpy as np
+import utils
 
 
 class VAE(nn.Module):
@@ -117,3 +118,98 @@ class VAE(nn.Module):
     return recons, mu, logvar
 
 
+class Generator(nn.Module):
+  def __init__(self, device, image_channels=3, h_dim=1024, z_dim=100):
+    super(Generator, self).__init__()
+
+    self.device = device
+
+    self.fc = nn.Sequential(
+                nn.Linear(z_dim, h_dim),
+                nn.BatchNorm1d(h_dim),
+                nn.ELU(),
+                nn.Linear(h_dim, 128 * 4 * 4),
+                nn.BatchNorm1d(128 * 4 * 4),
+                nn.ELU()
+            )
+
+    self.deconv = nn.Sequential(
+      nn.ConvTranspose2d(128, 64, 4, 2, 1),
+      nn.BatchNorm2d(64),
+      nn.ELU(),
+
+      nn.ConvTranspose2d(64, 32, 3, 1, 1),
+      nn.BatchNorm2d(32),
+      nn.ELU(),
+
+      nn.ConvTranspose2d(32, 16, 4, 2, 1),
+      nn.BatchNorm2d(16),
+      nn.ELU(),
+
+      nn.ConvTranspose2d(16, 16, 3, 1, 1),
+      nn.BatchNorm2d(16),
+      nn.ELU(),
+
+      nn.ConvTranspose2d(16, 8, 4, 2, 1),
+      nn.BatchNorm2d(8),
+      nn.ELU(),
+
+      nn.ConvTranspose2d(8, image_channels, 3, 1, 1),
+      nn.Sigmoid()
+    )
+
+    utils.initialize_weights(self)
+
+    def forward(self, input):
+      x = self.fc(input)
+      x = x.view(-1, 128, 4, 4)
+
+      x = self.deconv(x)
+
+      return x
+
+
+class Discriminator(nn.Module):
+  def __init__(self, device, image_channels=3, h_dim=1024, z_dim=100):
+    super(Discriminator, self).__init__()
+
+    self.device = device
+
+    self.conv = nn.Sequential(
+    nn.Conv2d(image_channels, 8, 3, 1, 1),
+    nn.BatchNorm2d(8),
+    nn.ELU(),
+    nn.Conv2d(8, 16, 3, 2, 1),
+    nn.BatchNorm2d(16),
+    nn.ELU(),
+
+    nn.Conv2d(16, 16, 3, 1, 1),
+    nn.BatchNorm2d(16),
+    nn.ELU(),
+    nn.Conv2d(16, 32, 3, 2, 1),
+    nn.BatchNorm2d(32),
+    nn.ELU(),
+
+    nn.Conv2d(32, 64, 3, 1, 1),
+    nn.BatchNorm2d(64),
+    nn.ELU(),
+    nn.Conv2d(64, 128, 3, 2, 1),
+    nn.BatchNorm2d(128),
+    nn.ELU()
+    )
+
+    self.fc = nn.Sequential(
+                nn.Linear(128 * 4 * 4, h_dim),
+                nn.BatchNorm1d(h_dim),
+                nn.ELU(),
+                nn.Linear(1024, 1)
+            )
+
+    utils.initialize_weights(self)
+
+  def forward(self, input):
+    x = self.conv(input)
+    x = x.view(-1, 128 * 4 * 4)
+    x = self.fc(x)
+
+    return x
