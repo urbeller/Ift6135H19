@@ -39,13 +39,13 @@ def train(device, model, train_loader, epochs=100):
       recons, mu, logvar = model(X)
 
       # Compute loss
-      scaling_fact = X.shape[0] 
+      scaling_fact = X.shape[0] * X.shape[1] * X.shape[2] * X.shape[3]
 
       bce = latent_loss(recons, X)
       kl = -0.5 * torch.sum(1 + logvar - mu**2 - torch.exp(logvar))
       kl /= scaling_fact
 
-      loss = bce + kl
+      loss = bce + 0.1 * kl
       loss.backward()
       train_loss += loss.item()
       optim.step()
