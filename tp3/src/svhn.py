@@ -18,9 +18,9 @@ import utils
 def train(device, model, train_loader, epochs=100):
   
   if device == 'cuda':
-    latent_loss = nn.BCELoss().cuda()
+    latent_loss = nn.BCEWithLogitsLoss().cuda()
   else:
-    latent_loss = nn.BCELoss()
+    latent_loss = nn.BCEWithLogitsLoss()
 
   utils.initialize_weights(model)
   model.train()
