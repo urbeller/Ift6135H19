@@ -46,7 +46,7 @@ def compute_gp(device, D, x_real, x_fake, batch_size, lambda_f = 10):
   
   return gradient_penalty
 
-def train(device, D, G, train_loader, latent_dim=100, epochs=100, g_iters=10, d_iters = 20):
+def train(device, D, G, train_loader, batch_size=128, latent_dim=100, epochs=100, g_iters=10, d_iters = 20):
 
   D.train()
   G.train()
@@ -54,27 +54,33 @@ def train(device, D, G, train_loader, latent_dim=100, epochs=100, g_iters=10, d_
   d_optim = torch.optim.Adam(D.parameters(), lr=0.0001)
   g_optim = torch.optim.Adam(G.parameters(), lr=0.0001)
 
+  loss_fn = torch.nn.BCELoss()
+
   one = torch.tensor(1.0).to(device)
   mone = torch.tensor(-1.0).to(device)
 
+  real_label = Variable(torch.Tensor(batch_size, 1).fill_(1.0), requires_grad=False).to(device)
+  fake_label = Variable(torch.Tensor(batch_size, 1).fill_(0.0), requires_grad=False).to(device)
+
   for epoch in range(epochs):
 
-    # For each G iteration, compute some D iterations.
-    utils.set_req_grad(D, True)
+    #utils.set_req_grad(D, True)
     for d_ndx in range(d_iters):
       D.zero_grad()
 
       X, _ = next(iter(train_loader))
-      batch_size = X.shape[0]
   
+      if X.shape[0] != batch_size:
+        break
+
       x_real = Variable(X.to(device))
       
-      d_real = D(x_real)
       noise = Variable(torch.randn(batch_size, latent_dim)).to(device)
       x_fake = Variable(G(noise))
       d_fake = D(x_fake)
-      gp_loss = compute_gp(device, D, x_real, x_fake, batch_size)
-      d_loss = 0.5 * (torch.mean((d_real - 1)**2) + torch.mean(d_fake**2)) + gp_loss
+      d_real = D(x_real)
+      d_loss = (loss_fn(d_fake, fake_label) + loss_fn(d_real, real_label) )/2
+      #gp_loss = compute_gp(device, D, x_real, x_fake, batch_size)
       d_loss.backward()
       d_optim.step()
 
@@ -82,14 +88,14 @@ def train(device, D, G, train_loader, latent_dim=100, epochs=100, g_iters=10, d_
     ##
     ## G train.
     for g_ndx in range(g_iters):
-      utils.set_req_grad(D, False)
+      #utils.set_req_grad(D, False)
 
       G.zero_grad()
       x_noise = Variable(torch.randn(batch_size, latent_dim)).to(device)
       g_out = Variable(G(x_noise) , requires_grad=True)
 
       g_fake = D(g_out)
-      g_loss = 0.5 * torch.mean((g_fake - 1)**2)
+      g_loss = loss_fn(g_fake, real_label)
       g_loss.backward()
       g_optim.step()
 
@@ -118,5 +124,6 @@ if __name__ == "__main__":
   D.to(device)
   G.to(device)
 
-  train_data, valid_data, test_data = utils.get_data_loader("svhn", 128)
-  train(device, D, G, train_data, latent_dim=latent_dim)
+  batch_size = 128
+  train_data, valid_data, test_data = utils.get_data_loader("svhn", batch_size)
+  train(device, D, G, train_data, batch_size=batch_size, latent_dim=latent_dim)
