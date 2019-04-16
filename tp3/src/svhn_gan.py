@@ -23,7 +23,7 @@ def generate_image(G, device, latent_dim, n_images, prefix):
   samples = G(noise)
   samples = samples.view(-1, 3, 32, 32)
   samples = samples.mul(0.5).add(0.5)
-  save_image(sample.data.view(n_images, 3, 32, 32).cpu(), 'results/sample-' + prefix + '.png', nrow= 10 )
+  save_image(samples.data.view(n_images, 3, 32, 32).cpu(), 'results/sample-' + prefix + '.png', nrow= 10 )
 
 def compute_gp(device, D, x_real, x_fake, batch_size, lambda_f = 10):
   sz1 = x_real.size(1)
