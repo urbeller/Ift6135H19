@@ -18,7 +18,7 @@ import utils
 
 
 def generate_image(G, device, latent_dim, n_images, prefix):
-  noise = Variable(torch.randn(n_images, latent_dim) , volatile=True).to(device)
+  noise = Variable(torch.randn(n_images, latent_dim) , requires_grad=False).to(device)
 
   samples = G(noise)
   samples = samples.view(-1, 3, 32, 32)
