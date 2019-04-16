@@ -88,7 +88,7 @@ def train(device, D, G, train_loader, latent_dim=100, epochs=100, g_iters=10000,
 
     G.zero_grad()
     x_noise = Variable(torch.randn(batch_size, latent_dim)).to(device)
-    g_fake = Variable(G(x_noise))
+    g_fake = Variable(G(x_noise) , requires_grad=True)
     g_fake = g_fake.mean()
     g_fake.backward(mone)
 
