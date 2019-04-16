@@ -73,7 +73,8 @@ def train(device, D, G, train_loader, latent_dim=100, epochs=100, g_iters=10000,
       noise = Variable(torch.randn(batch_size, latent_dim)).to(device)
       x_fake = Variable(G(noise))
       d_fake = D(x_fake)
-      d_loss = 0.5 * (torch.mean((d_real - 1)**2) + torch.mean(d_fake**2))
+      gp_loss = compute_gp(device, D, x_real, x_fake, batch_size)
+      d_loss = 0.5 * (torch.mean((d_real - 1)**2) + torch.mean(d_fake**2)) + gp_loss
       d_loss.backward()
       d_optim.step()
 
