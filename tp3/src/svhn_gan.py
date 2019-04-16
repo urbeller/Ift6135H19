@@ -46,18 +46,18 @@ def compute_gp(device, D, x_real, x_fake, batch_size, lambda_f = 10):
   
   return gradient_penalty
 
-def train(device, D, G, train_loader, latent_dim=100, epochs=100, g_iters=10000, d_iters = 5):
+def train(device, D, G, train_loader, latent_dim=100, epochs=100, g_iters=10, d_iters = 20):
 
   D.train()
   G.train()
   
-  d_optim = torch.optim.Adam(D.parameters(), lr=0.001)
-  g_optim = torch.optim.Adam(G.parameters(), lr=0.001)
+  d_optim = torch.optim.Adam(D.parameters(), lr=0.0001)
+  g_optim = torch.optim.Adam(G.parameters(), lr=0.0001)
 
   one = torch.tensor(1.0).to(device)
   mone = torch.tensor(-1.0).to(device)
 
-  for g_ndx in range(g_iters):
+  for epoch in range(epochs):
 
     # For each G iteration, compute some D iterations.
     utils.set_req_grad(D, True)
@@ -78,49 +78,23 @@ def train(device, D, G, train_loader, latent_dim=100, epochs=100, g_iters=10000,
       d_loss.backward()
       d_optim.step()
 
-      """
-      # Train D on real data.
-      d_real = D(x_real)
-      d_real = d_real.mean()
-      d_real.backward(mone)
-
-      # Train D on fake images.
-      noise = Variable(torch.randn(batch_size, latent_dim)).to(device)
-      x_fake = Variable(G(noise))
-      d_fake = D(x_fake)
-      d_fake = d_fake.mean()
-      d_fake.backward(one)
-
-      # Gradient penalty
-      gp_loss = compute_gp(device, D, x_real, x_fake, batch_size)
-      gp_loss.backward()
-      d_loss = d_fake - d_real + gp_loss
-
-      d_optim.step()
-      """
-
 
     ##
     ## G train.
-    utils.set_req_grad(D, False)
+    for g_ndx in range(g_iters):
+      utils.set_req_grad(D, False)
 
-    G.zero_grad()
-    x_noise = Variable(torch.randn(batch_size, latent_dim)).to(device)
-    g_out = Variable(G(x_noise) , requires_grad=True)
+      G.zero_grad()
+      x_noise = Variable(torch.randn(batch_size, latent_dim)).to(device)
+      g_out = Variable(G(x_noise) , requires_grad=True)
 
-    g_fake = D(g_out)
-    g_loss = 0.5 * torch.mean((g_fake - 1)**2)
-    g_loss.backward()
+      g_fake = D(g_out)
+      g_loss = 0.5 * torch.mean((g_fake - 1)**2)
+      g_loss.backward()
+      g_optim.step()
 
-    """
-    g_fake = g_fake.mean()
-    g_fake.backward(mone)
-    """
-    g_optim.step()
-
-    if g_ndx % 10 == 0:
-      print("Iter ", g_ndx, "D_loss=", d_loss.mean().cpu().data.numpy(), "G_loss=", g_loss.mean().cpu().data.numpy())
-      generate_image(G, device, latent_dim, 100, g_ndx)
+    print("Epoch", epoch, "D_loss=", d_loss.mean().cpu().data.numpy(), "G_loss=", g_loss.mean().cpu().data.numpy())
+    generate_image(G, device, latent_dim, 100, epoch )
 
 if __name__ == "__main__":
   import argparse
@@ -144,5 +118,5 @@ if __name__ == "__main__":
   D.to(device)
   G.to(device)
 
-  train_data, valid_data, test_data = utils.get_data_loader("svhn", 64)
+  train_data, valid_data, test_data = utils.get_data_loader("svhn", 128)
   train(device, D, G, train_data, latent_dim=latent_dim)
