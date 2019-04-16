@@ -125,4 +125,8 @@ if __name__ == "__main__":
 
   batch_size = 128
   train_data, valid_data, test_data = utils.get_data_loader("svhn", batch_size)
+
+  X, _ = next(iter(train_data))
+  save_image(X.data.view(batch_size, 3, 32, 32).cpu(), 'results/sample-'  + '.png', nrow= 10 )
+
   train(device, D, G, train_data, batch_size=batch_size, latent_dim=latent_dim)
