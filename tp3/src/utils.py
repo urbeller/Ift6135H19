@@ -59,3 +59,6 @@ def initialize_weights(net):
       m.weight.data.normal_(0, 0.02)
       m.bias.data.zero_()
 
+def set_req_grad(model, state):
+  for p in model.parameters(): 
+    p.requires_grad = state 
