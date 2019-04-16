@@ -64,7 +64,6 @@ def train(device, D, G, train_loader, batch_size=128, latent_dim=100, epochs=100
 
   for epoch in range(epochs):
 
-    #utils.set_req_grad(D, True)
     for d_ndx in range(d_iters):
       D.zero_grad()
 
@@ -76,7 +75,7 @@ def train(device, D, G, train_loader, batch_size=128, latent_dim=100, epochs=100
       x_real = Variable(X.to(device))
       
       noise = Variable(torch.randn(batch_size, latent_dim)).to(device)
-      x_fake = Variable(G(noise))
+      x_fake = Variable(G(noise).to(device))
       d_fake = D(x_fake)
       d_real = D(x_real)
       d_loss = (loss_fn(d_fake, fake_label) + loss_fn(d_real, real_label) )/2
@@ -88,7 +87,6 @@ def train(device, D, G, train_loader, batch_size=128, latent_dim=100, epochs=100
     ##
     ## G train.
     for g_ndx in range(g_iters):
-      #utils.set_req_grad(D, False)
 
       G.zero_grad()
       x_noise = Variable(torch.randn(batch_size, latent_dim)).to(device)
