@@ -59,8 +59,8 @@ def train(device, D, G, train_loader, batch_size=128, latent_dim=100, epochs=100
   one = torch.tensor(1.0).to(device)
   mone = torch.tensor(-1.0).to(device)
 
-  real_label = Variable(torch.Tensor(batch_size, 1).fill_(1.0), requires_grad=False).to(device)
-  fake_label = Variable(torch.Tensor(batch_size, 1).fill_(0.0), requires_grad=False).to(device)
+  real_label = Variable(torch.Tensor(batch_size, 1).fill_(0.0), requires_grad=False).to(device)
+  fake_label = Variable(torch.Tensor(batch_size, 1).fill_(1.0), requires_grad=False).to(device)
 
   for epoch in range(epochs):
 
