@@ -22,6 +22,7 @@ def generate_image(G, device, latent_dim, n_images, prefix):
 
   samples = G(noise)
   samples = samples.view(-1, 3, 32, 32)
+  print(samples.max(), samples.min())
   samples = samples.mul(0.5).add(0.5)
   save_image(samples.data.view(n_images, 3, 32, 32).cpu(), 'results/sample-' + str(prefix) + '.png', nrow= 10 )
 
