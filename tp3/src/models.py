@@ -123,8 +123,7 @@ class Generator(nn.Module):
 
     self.fc = nn.Sequential(
                 nn.Linear(z_dim, 128 * 4 * 4),
-                nn.BatchNorm1d(128 * 4 * 4),
-                nn.ELU()
+                nn.BatchNorm1d(128 * 4 * 4)
             )
 
     self.deconv = nn.Sequential(
