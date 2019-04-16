@@ -41,8 +41,12 @@ def train(device, model, train_loader, epochs=100):
       # Compute loss
       scaling_fact = X.shape[0] * X.shape[1] * X.shape[2] * X.shape[3]
 
-      bce = nn.BCELoss(recons, X, size_average=None)
-      kl = -0.5 * torch.sum(1 + logvar - mu**2 - torch.exp(logvar))
+      bce = latent_loss(recons, X)
+      variance = torch.exp(logvar)
+      variance_sq = variance * variance
+      kl = 0.5 * torch.mean(mu * mu + variance_sq - torch.log(variance_sq) - 1)
+      #kl = -0.5 * torch.sum(1 + logvar - mu**2 - torch.exp(logvar))
+      #kl /= scaling_fact
 
       loss = bce + kl
       loss.backward()
