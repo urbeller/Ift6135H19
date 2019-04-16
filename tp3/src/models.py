@@ -53,7 +53,7 @@ class VAE(nn.Module):
 
 
     self.fc_decoder = nn.Sequential(
-                      nn.Linear(z_dim, 128 * 4 * 4) 
+                      nn.Linear(z_dim, 128 * 4 * 4),
                       nn.BatchNorm1d(128 * 4 * 4),
                       nn.ELU()
                       )
