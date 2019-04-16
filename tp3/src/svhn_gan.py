@@ -69,7 +69,6 @@ def train(device, D, G, train_loader, latent_dim=100, epochs=100, g_iters=10000,
   
       x_real = Variable(X.to(device))
       
-      """
       d_real = D(x_real)
       noise = Variable(torch.randn(batch_size, latent_dim)).to(device)
       x_fake = Variable(G(noise))
@@ -97,6 +96,7 @@ def train(device, D, G, train_loader, latent_dim=100, epochs=100, g_iters=10000,
       d_loss = d_fake - d_real + gp_loss
 
       d_optim.step()
+      """
 
 
     ##
@@ -105,12 +105,16 @@ def train(device, D, G, train_loader, latent_dim=100, epochs=100, g_iters=10000,
 
     G.zero_grad()
     x_noise = Variable(torch.randn(batch_size, latent_dim)).to(device)
-    g_out = Variable(G(x_noise) , requires_grad=True)
+    g_out = Variable(G(x_noise) )
 
     g_fake = D(g_out)
+    g_loss = 0.5 * torch.mean((g_fake - 1)**2)
+    g_loss.backward()
+
+    """
     g_fake = g_fake.mean()
     g_fake.backward(mone)
-
+    """
     g_optim.step()
 
     if g_ndx % 10 == 0:
