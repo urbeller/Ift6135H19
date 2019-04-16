@@ -105,10 +105,11 @@ class VAE(nn.Module):
     return output
 
   def sample_latent(self, mu, logvar):
-    var = torch.exp(logvar)
-    std_z = torch.from_numpy(np.random.normal(0, 1, size=var.size())).type(torch.FloatTensor).to(self.device)
+    var = torch.exp(0.5 * logvar)
+    #std_z = torch.from_numpy(np.random.normal(0, 1, size=var.size())).type(torch.FloatTensor).to(self.device)
+    std_z = torch.randn_like(var).to(device)
     
-    return mu + var * Variable(std_z, requires_grad=False)
+    return mu + var * std_z
 
   def forward(self, x):
     mu, logvar = self.encode(x)
