@@ -38,7 +38,7 @@ def compute_gp(device, D, x_real, x_fake, batch_size, lambda_f = 10):
   
   return gradient_penalty
 
-def train(device, D, G, train_loader, latent_dim=100, epochs=100, g_iters=10000, d_iters = 10):
+def train(device, D, G, train_loader, latent_dim=100, epochs=100, g_iters=10000, d_iters = 20):
 
   D.train()
   G.train()
@@ -94,8 +94,8 @@ def train(device, D, G, train_loader, latent_dim=100, epochs=100, g_iters=10000,
 
     g_optim.step()
 
-    if g_ndx % 100 == 0:
-      print("Iter ", g_ndx, "D_loss=", d_loss.cpu().data.numpy())
+    if g_ndx % 10 == 0:
+      print("Iter ", g_ndx, "D_loss=", d_loss.cpu().data.numpy(), "G_loss=", g_fake().cpu.data.numpy())
 if __name__ == "__main__":
   import argparse
   parser = argparse.ArgumentParser()
