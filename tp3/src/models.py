@@ -77,7 +77,7 @@ class VAE(nn.Module):
       nn.ELU(),
 
       nn.ConvTranspose2d(8, image_channels, 3, 1, 1),
-      #nn.Sigmoid()
+      nn.Sigmoid()
     )
 
     self.fc_dec = nn.Sequential(
