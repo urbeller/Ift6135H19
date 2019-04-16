@@ -17,6 +17,14 @@ import models
 import utils
 
 
+def generate_image(G, device, latent_dim, n_images, prefix):
+  noise = Variable(torch.randn(n_images, latent_dim) , volatile=True).to(device)
+
+  samples = G(noise)
+  samples = samples.view(-1, 3, 32, 32)
+  samples = samples.mul(0.5).add(0.5)
+  save_image(sample.data.view(n_images, 3, 32, 32).cpu(), 'results/sample-' + prefix + '.png', nrow= 10 )
+
 def compute_gp(device, D, x_real, x_fake, batch_size, lambda_f = 10):
   sz1 = x_real.size(1)
   sz2 = x_real.size(2)
@@ -96,6 +104,8 @@ def train(device, D, G, train_loader, latent_dim=100, epochs=100, g_iters=10000,
 
     if g_ndx % 10 == 0:
       print("Iter ", g_ndx, "D_loss=", d_loss.cpu().data.numpy(), "G_loss=", g_fake.cpu().data.numpy())
+      generate_image(G, device, latent_dim, 100, g_ndx)
+
 if __name__ == "__main__":
   import argparse
   parser = argparse.ArgumentParser()
