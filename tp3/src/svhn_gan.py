@@ -38,13 +38,7 @@ def compute_gp(device, D, x_real, x_fake, batch_size, lambda_f = 10):
   
   return gradient_penalty
 
-def train(device, D, G, train_loader, epochs=100, g_iters=10000, d_iters = 100):
-  latent_dim = 100
-
-  if device == 'cuda':
-    latent_loss = nn.BCELoss().cuda()
-  else:
-    latent_loss = nn.BCELoss()
+def train(device, D, G, train_loader, latent_dim=100, epochs=100, g_iters=10000, d_iters = 100):
 
   D.train()
   G.train()
@@ -111,7 +105,7 @@ if __name__ == "__main__":
 
   args = parser.parse_args()
 
-  z_dim = 100
+  latent_dim = 100
   epochs = args.epochs
 
   use_cuda = torch.cuda.is_available()
@@ -119,11 +113,11 @@ if __name__ == "__main__":
   using_cuda = (device == "cuda")
   print("Using ", device)
 
-  D = models.Discriminator(device, z_dim = z_dim)
-  G = models.Generator(device, z_dim = z_dim)
+  D = models.Discriminator(device, z_dim = latent_dim)
+  G = models.Generator(device, z_dim = latent_dim)
 
   D.to(device)
   G.to(device)
 
   train_data, valid_data, test_data = utils.get_data_loader("svhn", 32)
-  train(device, D, G, train_data)
+  train(device, D, G, train_data, latent_dim=latent_dim)

@@ -116,7 +116,7 @@ class VAE(nn.Module):
 
 
 class Generator(nn.Module):
-  def __init__(self, device, image_channels=3, h_dim=1024, z_dim=100):
+  def __init__(self, device, image_channels=3,  z_dim=100):
     super(Generator, self).__init__()
 
     self.device = device
@@ -155,6 +155,7 @@ class Generator(nn.Module):
     utils.initialize_weights(self)
 
   def forward(self, input):
+    print(input.size())
     x = self.fc(input)
     x = x.view(-1, 128, 4, 4)
 
@@ -164,7 +165,7 @@ class Generator(nn.Module):
 
 
 class Discriminator(nn.Module):
-  def __init__(self, device, image_channels=3, h_dim=1024, z_dim=100):
+  def __init__(self, device, image_channels=3, z_dim=100):
     super(Discriminator, self).__init__()
 
     self.device = device
