@@ -52,12 +52,8 @@ def train(device, D, G, train_loader, epochs=100, g_iters=10000, d_iters = 100):
   d_optim = torch.optim.Adam(D.parameters(), lr=0.001)
   g_optim = torch.optim.Adam(G.parameters(), lr=0.001)
 
-  one = torch.tensor(1.0)
-  mone = torch.tensor(-1.0)
-
-  if device == 'cuda':
-    one = one.cuda()
-    mone = mone.cuda()
+  one = torch.tensor(1.0).to(device)
+  mone = torch.tensor(-1.0).to(device)
 
   for g_ndx in range(g_iters):
 
@@ -72,7 +68,6 @@ def train(device, D, G, train_loader, epochs=100, g_iters=10000, d_iters = 100):
       x_real = Variable(X.to(device))
       
       # Train D on real data.
-      print(x_real.size())
       d_real = D(x_real)
       d_real = d_real.mean()
       d_real.backward(mone)
