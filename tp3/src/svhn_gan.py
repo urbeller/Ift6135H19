@@ -127,5 +127,8 @@ if __name__ == "__main__":
   D = models.Discriminator(device, z_dim = z_dim)
   G = models.Generator(device, z_dim = z_dim)
 
+  D.to(device)
+  G.to(device)
+
   train_data, valid_data, test_data = utils.get_data_loader("svhn", 32)
   train(device, D, G, train_data)
