@@ -40,7 +40,7 @@ class VAE(nn.Module):
     nn.ELU(),
     nn.Conv2d(64, 128, 3, 2, 1),
     nn.BatchNorm2d(128),
-    nn.ELU()
+    #nn.ELU()
     )
     
     self.fc_enc = nn.Sequential(
@@ -49,8 +49,9 @@ class VAE(nn.Module):
                 nn.ELU()
             )
 
-    self.fc_mu = nn.Linear(h_dim, z_dim) 
-    self.fc_logvar = nn.Linear(h_dim, z_dim) 
+    self.fc_mu = nn.Linear(128 * 4 * 4, z_dim) 
+    self.fc_logvar = nn.Linear( 128 * 4 * 4, z_dim) 
+    self.fc_decoder = nn.Linear(z_dim, 128 * 4 * 4) 
     self.fc_dec1 = nn.Linear(z_dim, h_dim) 
     self.fc_dec2 = nn.Linear(h_dim, 128 * 4 * 4) 
 
@@ -94,12 +95,12 @@ class VAE(nn.Module):
 
   def encode(self, x):
     conv_out = self.encoder(x)
-    h = self.fc_enc(conv_out.view(-1, 128 * 4 * 4))
+    h = conv_out.view(-1, 128 * 4 * 4)
 
     return self.fc_mu(h), self.fc_logvar(h)
 
   def decode(self, latent):
-    h = self.fc_dec(latent)
+    h = self.fc_decoder(latent)
     output = self.decoder(h.view(-1, 128, 4, 4))
 
     return output
