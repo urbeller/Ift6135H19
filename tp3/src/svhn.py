@@ -46,7 +46,7 @@ def train(device, model, train_loader, epochs=100):
       variance_sq = variance * variance
       #kl = 0.5 * torch.mean(mu * mu + variance_sq - torch.log(variance_sq) - 1)
       kl = -0.5 * torch.sum(1 + logvar - mu**2 - torch.exp(logvar))
-      #kl /= scaling_fact
+      kl /= 32
 
       loss = bce + kl
       loss.backward()
