@@ -15,7 +15,7 @@ import numpy as np
 import models
 import utils
 
-def train(device, model, train_loader, epochs=100):
+def train(device, model, train_loader, epochs=100, batch_size=32):
   
   if device == 'cuda':
     latent_loss = nn.BCELoss().cuda()
@@ -39,11 +39,9 @@ def train(device, model, train_loader, epochs=100):
       recons, mu, logvar = model(X)
 
       # Compute loss
-      scaling_fact = X.shape[0] * X.shape[1] * X.shape[2] * X.shape[3]
-
-      bce = F.binary_cross_entropy(recons, X, size_average=False)
+      bce = F.binary_cross_entropy(recons, X)
       kl = -0.5 * torch.mean(1 + logvar - mu**2 - torch.exp(logvar))
-      #kl /= scaling_fact
+      kl /= (batch_size * 32 * 32)
 
       loss = bce + kl
       loss.backward()
@@ -65,6 +63,7 @@ if __name__ == "__main__":
 
   z_dim = 100
   epochs = args.epochs
+  batch_size = 128
 
   use_cuda = torch.cuda.is_available()
   device = torch.device("cuda" if use_cuda else "cpu")
@@ -74,9 +73,9 @@ if __name__ == "__main__":
   vae = models.VAE(device, z_dim = z_dim)
 
   if args.use_model == "" :
-    train_data, valid_data, test_data = utils.get_data_loader("svhn", 32)
+    train_data, valid_data, test_data = utils.get_data_loader("svhn", batch_size)
     vae.to(device)
-    train(device, vae, train_data, epochs=epochs)
+    train(device, vae, train_data, epochs=epochs, batch_size=batch_size)
     torch.save(vae.state_dict(), 'vae_model_final.pth')
 
   else:
