@@ -45,7 +45,7 @@ def train(device, model, train_loader, epochs=100):
       kl = -0.5 * torch.sum(1 + logvar - mu**2 - torch.exp(logvar))
       kl /= scaling_fact
 
-      loss = bce + 10 * kl
+      loss = bce +  kl
       loss.backward()
       train_loss += loss.item()
       optim.step()
