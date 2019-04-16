@@ -39,7 +39,7 @@ def train(device, model, train_loader, epochs=100):
       recons, mu, logvar = model(X)
 
       # Compute loss
-      scaling_fact = X.shape[0] *  X.shape[2] * X.shape[3]
+      scaling_fact = X.shape[0] 
 
       bce = latent_loss(recons, X)
       kl = -0.5 * torch.sum(1 + logvar - mu**2 - torch.exp(logvar))
