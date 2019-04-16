@@ -18,9 +18,9 @@ import utils
 def train(device, model, train_loader, epochs=100):
   
   if device == 'cuda':
-    latent_loss = nn.BCELoss().cuda()
+    latent_loss = nn.BCELoss( reduction="none").cuda()
   else:
-    latent_loss = nn.BCELoss()
+    latent_loss = nn.BCELoss( reduction="none")
 
   utils.initialize_weights(model)
   model.train()
@@ -41,7 +41,7 @@ def train(device, model, train_loader, epochs=100):
       # Compute loss
       scaling_fact = X.shape[0] * X.shape[1] * X.shape[2] * X.shape[3]
 
-      bce = latent_loss(recons, X, reduction="none")
+      bce = latent_loss(recons, X)
       variance = torch.exp(logvar)
       variance_sq = variance * variance
       kl = -0.5 * torch.sum(1 + logvar - mu**2 - torch.exp(logvar))
