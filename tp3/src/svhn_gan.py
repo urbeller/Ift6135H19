@@ -72,14 +72,14 @@ def train(device, D, G, train_loader, latent_dim=100, epochs=100, g_iters=10000,
       # Train D on real data.
       d_real = D(x_real)
       d_real = d_real.mean()
-      d_real.backward(one)
+      d_real.backward(mone)
 
       # Train D on fake images.
       noise = Variable(torch.randn(batch_size, latent_dim)).to(device)
       x_fake = Variable(G(noise))
       d_fake = D(x_fake)
       d_fake = d_fake.mean()
-      d_fake.backward(mone)
+      d_fake.backward(one)
 
       # Gradient penalty
       gp_loss = compute_gp(device, D, x_real, x_fake, batch_size)
@@ -98,7 +98,7 @@ def train(device, D, G, train_loader, latent_dim=100, epochs=100, g_iters=10000,
     x_noise = Variable(torch.randn(batch_size, latent_dim)).to(device)
     g_fake = Variable(G(x_noise) , requires_grad=True)
     g_fake = g_fake.mean()
-    g_fake.backward(one)
+    g_fake.backward(mone)
     
     g_optim.step()
 
