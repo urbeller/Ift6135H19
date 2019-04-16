@@ -86,6 +86,7 @@ def train(device, D, G, train_loader, epochs=100, g_iters=10000, d_iters = 100):
       # Gradient penalty
       gp_loss = compute_gp(device, D, x_real, x_fake, batch_size)
       gp_loss.backward()
+      d_loss = d_fake - d_real + gp_loss
 
       d_optim.step()
 
@@ -102,6 +103,10 @@ def train(device, D, G, train_loader, epochs=100, g_iters=10000, d_iters = 100):
     g_fake = g_fake.mean()
     g_fake.backward(mone)
 
+    g_optim.step()
+
+    if g_ndx % 100 == 0:
+      print("Iter ", g_ndx, "D_loss=", d_loss.cpu().data.numpy())
 if __name__ == "__main__":
   import argparse
   parser = argparse.ArgumentParser()
