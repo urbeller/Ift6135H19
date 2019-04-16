@@ -91,11 +91,11 @@ def train(device, D, G, train_loader, latent_dim=100, epochs=100, g_iters=10000,
     g_fake = Variable(G(x_noise) , requires_grad=True)
     g_fake = g_fake.mean()
     g_fake.backward(mone)
-
+    
     g_optim.step()
 
     if g_ndx % 10 == 0:
-      print("Iter ", g_ndx, "D_loss=", d_loss.cpu().data.numpy(), "G_loss=", g_fake().cpu.data.numpy())
+      print("Iter ", g_ndx, "D_loss=", d_loss.cpu().data.numpy(), "G_loss=", g_fake.cpu.data.numpy())
 if __name__ == "__main__":
   import argparse
   parser = argparse.ArgumentParser()
