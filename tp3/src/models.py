@@ -155,7 +155,6 @@ class Generator(nn.Module):
     utils.initialize_weights(self)
 
   def forward(self, input):
-    print(input.size())
     x = self.fc(input)
     x = x.view(-1, 128, 4, 4)
 
