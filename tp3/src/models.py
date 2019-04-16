@@ -122,10 +122,7 @@ class Generator(nn.Module):
     self.device = device
 
     self.fc = nn.Sequential(
-                nn.Linear(z_dim, h_dim),
-                nn.BatchNorm1d(h_dim),
-                nn.ELU(),
-                nn.Linear(h_dim, 128 * 4 * 4),
+                nn.Linear(z_dim, 128 * 4 * 4),
                 nn.BatchNorm1d(128 * 4 * 4),
                 nn.ELU()
             )
@@ -152,18 +149,18 @@ class Generator(nn.Module):
       nn.ELU(),
 
       nn.ConvTranspose2d(8, image_channels, 3, 1, 1),
-      nn.Sigmoid()
+      nn.Tanh()
     )
 
     utils.initialize_weights(self)
 
-    def forward(self, input):
-      x = self.fc(input)
-      x = x.view(-1, 128, 4, 4)
+  def forward(self, input):
+    x = self.fc(input)
+    x = x.view(-1, 128, 4, 4)
 
-      x = self.deconv(x)
+    x = self.deconv(x)
 
-      return x
+    return x
 
 
 class Discriminator(nn.Module):
@@ -176,6 +173,7 @@ class Discriminator(nn.Module):
     nn.Conv2d(image_channels, 8, 3, 1, 1),
     nn.BatchNorm2d(8),
     nn.ELU(),
+
     nn.Conv2d(8, 16, 3, 2, 1),
     nn.BatchNorm2d(16),
     nn.ELU(),
@@ -190,16 +188,15 @@ class Discriminator(nn.Module):
     nn.Conv2d(32, 64, 3, 1, 1),
     nn.BatchNorm2d(64),
     nn.ELU(),
+
     nn.Conv2d(64, 128, 3, 2, 1),
     nn.BatchNorm2d(128),
     nn.ELU()
     )
 
     self.fc = nn.Sequential(
-                nn.Linear(128 * 4 * 4, h_dim),
-                nn.BatchNorm1d(h_dim),
-                nn.ELU(),
-                nn.Linear(1024, 1)
+                nn.Linear(128 * 4 * 4, 1),
+                nn.Sigmoid()
             )
 
     utils.initialize_weights(self)

@@ -72,6 +72,7 @@ def train(device, D, G, train_loader, epochs=100, g_iters=10000, d_iters = 100):
       x_real = Variable(X.to(device))
       
       # Train D on real data.
+      print(x_real.size())
       d_real = D(x_real)
       d_real = d_real.mean()
       d_real.backward(mone)

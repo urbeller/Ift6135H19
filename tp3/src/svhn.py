@@ -79,14 +79,14 @@ if __name__ == "__main__":
     torch.save(vae.state_dict(), 'vae_model_final.pth')
 
   else:
-    sqrt_n_samples = 35
+    sqrt_n_samples = 25
     n_samples = sqrt_n_samples * sqrt_n_samples
     vae.load_state_dict(torch.load( args.use_model , map_location='cpu') )
     vae.eval()
     vae.to(device)
 
     # Get some samples
-    sample = Variable(torch.randn(n_samples, z_dim))
+    sample = Variable(torch.randn(n_samples, z_dim) )
     sample.to(device)
 
     sample = vae.decode(sample).cpu()
