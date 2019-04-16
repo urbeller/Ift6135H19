@@ -13,7 +13,7 @@ from torchvision.utils import save_image
 import numpy as np
 
 image_transform = transforms.Compose([
-    transforms.ToTensor()
+    transforms.ToTensor(), transforms.Normalize((.5, .5, .5), (.5, .5, .5))
 ])
 
 def get_data_loader(dataset_location, batch_size):
