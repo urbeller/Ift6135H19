@@ -105,7 +105,7 @@ def train(device, D, G, train_loader, latent_dim=100, epochs=100, g_iters=10000,
 
     G.zero_grad()
     x_noise = Variable(torch.randn(batch_size, latent_dim)).to(device)
-    g_out = Variable(G(x_noise) )
+    g_out = Variable(G(x_noise) , requires_grad=True)
 
     g_fake = D(g_out)
     g_loss = 0.5 * torch.mean((g_fake - 1)**2)
