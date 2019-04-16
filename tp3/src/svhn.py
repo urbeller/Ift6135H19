@@ -42,9 +42,7 @@ def train(device, model, train_loader, epochs=100):
       scaling_fact = X.shape[0] * X.shape[1] * X.shape[2] * X.shape[3]
 
       bce = F.binary_cross_entropy(recons, X, size_average=False)
-      variance = torch.exp(logvar)
-      variance_sq = variance * variance
-      kl = -0.5 * torch.sum(1 + logvar - mu**2 - torch.exp(logvar))
+      kl = -0.5 * torch.mean(1 + logvar - mu**2 - torch.exp(logvar))
       #kl /= scaling_fact
 
       loss = bce + kl
