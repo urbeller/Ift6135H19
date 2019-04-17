@@ -111,8 +111,8 @@ if __name__ == "__main__":
   using_cuda = (device == "cuda")
   print("Using ", device)
 
-  D = models.Discriminator(device, z_dim = latent_dim)
-  G = models.Generator(device, z_dim = latent_dim)
+  D = models.Discriminator(device, z_dim = latent_dim).apply(utils.initialize_weights)
+  G = models.Generator(device, z_dim = latent_dim).apply(utils.initialize_weights)
 
   D.to(device)
   G.to(device)
