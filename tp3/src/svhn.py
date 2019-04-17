@@ -49,7 +49,7 @@ def train(device, model, train_loader, epochs=100):
       loss = bce +  kl
       """
       #bce = latent_loss(recons.view(batch_size, -1), X.view(batch_size, -1))
-      bce = latent_loss(recons, X)
+      bce = latent_loss(recons, X).mean()
       kl = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
       loss = bce + kl
 
