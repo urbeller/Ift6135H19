@@ -50,7 +50,7 @@ def train(device, model, train_loader, epochs=100):
       """
       bce = latent_loss(recons.view(batch_size, -1), X.view(batch_size, -1))
       kl = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-      loss = bce - kl
+      loss = bce + kl
 
       loss.backward()
       train_loss += loss.item()
