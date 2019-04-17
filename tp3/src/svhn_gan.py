@@ -64,10 +64,8 @@ def train(device, D, G, train_loader, batch_size=128, latent_dim=100, epochs=100
 
   for epoch in range(epochs):
 
-    for d_ndx in range(d_iters):
+    for idx, (X,Y) in enumerate(train_loader):
       D.zero_grad()
-
-      X, _ = next(iter(train_loader))
   
       if X.shape[0] != batch_size:
         break
@@ -83,9 +81,6 @@ def train(device, D, G, train_loader, batch_size=128, latent_dim=100, epochs=100
       d_loss.backward()
       d_optim.step()
 
-    ##
-    ## G train.
-    for g_ndx in range(g_iters):
 
       G.zero_grad()
       x_noise = Variable(torch.randn(batch_size, latent_dim)).to(device)
