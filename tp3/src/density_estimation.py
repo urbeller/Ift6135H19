@@ -24,7 +24,10 @@ def computeGP(model, p, q):
   z.requires_grad = True
   out = model(z)
 
-  gradients = grad(outputs=out, inputs=z, grad_outputs=torch.ones( out.size()), create_graph=True, only_inputs=True, retain_graph=True)[0]
+  gradients = grad(outputs=out, inputs=z, 
+                   grad_outputs=torch.ones( out.size()), 
+                   create_graph=True, only_inputs=True, 
+                   retain_graph=True)[0]
   gradients = gradients.view(gradients.size(0), -1)
   gradients_norm = gradients.norm(2, dim=1)
 
@@ -69,7 +72,7 @@ def jsd(p, q):
   return 0.5 * np.sum(d1 + d2)
 
 class Discriminator(nn.Module):
-  def __init__(self, input_dim=10, hidden_size=20, n_hidden=3):
+  def __init__(self, input_dim=1, hidden_size=32, n_hidden=3, with_activation=True):
     super(Discriminator, self).__init__()
 
     modules= [ nn.Linear(input_dim, hidden_size) ,  nn.ReLU() ]
@@ -78,7 +81,9 @@ class Discriminator(nn.Module):
       modules.append(nn.ReLU())
 						
     modules.append(nn.Linear(hidden_size, 1) )
-    modules.append(nn.Sigmoid())
+    
+    if with_activation:
+      modules.append(nn.Sigmoid())
 
     self.net = nn.Sequential(*modules)
     self.net.apply(self.init_weights)
@@ -135,22 +140,29 @@ def test_net(model, loss_fn, p, q, batch_size):
   return loss_fn(model, p_tensor, q_tensor, lambda_fact=0)
   
 def q_1_3():
-  epochs = 100
+  epochs = 1000
   batch_size= 512
   hidden_size = 50
   n_hidden = 3
   input_dim = 2
   theta_list = np.linspace(-1, 1, 21, endpoint=True)
+  mode = 'jsd'
 
-  loss_fn = loss_jsd
   outputs = []
+  if mode == 'jsd':
+   loss_fn = loss_jsd
+   with_activ = True
+  elif mode == 'wd':
+   loss_fn = loss_wd
+   with_activ = False
+
   for theta in theta_list:
     print("Theta = ", theta)
     p = samplers.distribution1(0, batch_size)
     q = samplers.distribution1(theta, batch_size)
 
     # Train
-    D = Discriminator(input_dim=input_dim, hidden_size=hidden_size, n_hidden=n_hidden)
+    D = Discriminator(input_dim=input_dim, hidden_size=hidden_size, n_hidden=n_hidden, with_activation=with_activ)
     train(D, p, q, loss_fn, batch_size=batch_size, epochs=epochs)
 
     # Test
@@ -218,7 +230,7 @@ def q_1_4():
   plt.close()
 
 if __name__ == '__main__':
-  #q_1_3()
-  q_1_4()
+  q_1_3()
+  #q_1_4()
 
 
