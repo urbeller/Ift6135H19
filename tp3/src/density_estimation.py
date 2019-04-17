@@ -146,7 +146,7 @@ def q_1_3():
   n_hidden = 3
   input_dim = 2
   theta_list = np.linspace(-1, 1, 21, endpoint=True)
-  mode = 'jsd'
+  mode = 'wd'
 
   outputs = []
   if mode == 'jsd':
@@ -184,7 +184,7 @@ def q_1_3():
 
 
 def q_1_4():
-  epochs = 1000
+  epochs = 10000
   batch_size=512
   hidden_size = 50
   n_hidden = 3
@@ -203,7 +203,7 @@ def q_1_4():
   d = lambda x: (1-torch.tanh(x*2+1)**2)*2+0.75
   N = lambda x: np.exp(-x**2/2.)/((2*np.pi)**0.5)
 
-  batch_size=1000
+  batch_size=512
   
   xx = np.linspace(-5,5,batch_size)
   f0_x_tensor = Variable( torch.from_numpy(np.float32(xx.reshape(batch_size, input_dim))) )
@@ -230,7 +230,7 @@ def q_1_4():
   plt.close()
 
 if __name__ == '__main__':
-  q_1_3()
-  #q_1_4()
+  #q_1_3()
+  q_1_4()
 
 
