@@ -23,21 +23,21 @@ class VAE(nn.Module):
     self.encoder = nn.Sequential(
     nn.Conv2d(image_channels, 8, 3, 1, 1),
     nn.BatchNorm2d(8),
-    nn.ReLU(),
+    nn.ELU(),
     nn.Conv2d(8, 16, 3, 2, 1),
     nn.BatchNorm2d(16),
-    nn.ReLU(),
+    nn.ELU(),
 
     nn.Conv2d(16, 16, 3, 1, 1),
     nn.BatchNorm2d(16),
-    nn.ReLU(),
+    nn.ELU(),
     nn.Conv2d(16, 32, 3, 2, 1),
     nn.BatchNorm2d(32),
-    nn.ReLU(),
+    nn.ELU(),
 
     nn.Conv2d(32, 64, 3, 1, 1),
     nn.BatchNorm2d(64),
-    nn.ReLU(),
+    nn.ELU(),
     nn.Conv2d(64, 128, 3, 2, 1),
     nn.BatchNorm2d(128),
     )
@@ -45,7 +45,7 @@ class VAE(nn.Module):
     self.fc_enc = nn.Sequential(
                 nn.Linear(128 * 4 * 4, h_dim),
                 nn.BatchNorm1d(h_dim),
-                nn.ReLU()
+                nn.ELU()
             )
 
     self.fc_mu = nn.Linear(128 * 4 * 4, z_dim) 
@@ -55,32 +55,32 @@ class VAE(nn.Module):
     self.fc_decoder = nn.Sequential(
                       nn.Linear(z_dim, 128 * 4 * 4),
                       nn.BatchNorm1d(128 * 4 * 4),
-                      nn.ReLU()
+                      nn.ELU()
                       )
 
     self.decoder = nn.Sequential(
       nn.ConvTranspose2d(128, 64, 4, 2, 1),
       nn.BatchNorm2d(64),
-      nn.ReLU(),
+      nn.ELU(),
 
       nn.ConvTranspose2d(64, 32, 3, 1, 1),
       nn.BatchNorm2d(32),
-      nn.ReLU(),
+      nn.ELU(),
 
       nn.ConvTranspose2d(32, 16, 4, 2, 1),
       nn.BatchNorm2d(16),
-      nn.ReLU(),
+      nn.ELU(),
 
       nn.ConvTranspose2d(16, 16, 3, 1, 1),
       nn.BatchNorm2d(16),
-      nn.ReLU(),
+      nn.ELU(),
 
       nn.ConvTranspose2d(16, 8, 4, 2, 1),
       nn.BatchNorm2d(8),
-      nn.ReLU(),
+      nn.ELU(),
 
       nn.ConvTranspose2d(8, image_channels, 3, 1, 1),
-      nn.ReLU(),
+      nn.ELU(),
       nn.Sigmoid()
     )
 
