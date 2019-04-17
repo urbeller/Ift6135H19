@@ -46,7 +46,7 @@ def compute_gp(device, D, x_real, x_fake, batch_size, lambda_f = 10):
   
   return gradient_penalty
 
-def train(device, D, G, train_loader, batch_size=128, latent_dim=100, epochs=10000, g_iters=20, d_iters = 10):
+def train(device, D, G, train_loader, batch_size=128, latent_dim=100, epochs=10000, g_iters=10, d_iters = 30):
 
   D.train()
   G.train()
@@ -63,19 +63,6 @@ def train(device, D, G, train_loader, batch_size=128, latent_dim=100, epochs=100
   fake_label = Variable(torch.Tensor(batch_size, 1).fill_(0.0), requires_grad=False).to(device)
 
   for epoch in range(epochs):
-
-    ##
-    ## G train.
-    for g_ndx in range(g_iters):
-
-      G.zero_grad()
-      x_noise = Variable(torch.randn(batch_size, latent_dim)).to(device)
-      g_out = Variable(G(x_noise) , requires_grad=True)
-
-      g_fake = D(g_out)
-      g_loss = loss_fn(g_fake, real_label)
-      g_loss.backward()
-      g_optim.step()
 
     for d_ndx in range(d_iters):
       D.zero_grad()
@@ -96,6 +83,18 @@ def train(device, D, G, train_loader, batch_size=128, latent_dim=100, epochs=100
       d_loss.backward()
       d_optim.step()
 
+    ##
+    ## G train.
+    for g_ndx in range(g_iters):
+
+      G.zero_grad()
+      x_noise = Variable(torch.randn(batch_size, latent_dim)).to(device)
+      g_out = Variable(G(x_noise) , requires_grad=True)
+
+      g_fake = D(g_out)
+      g_loss = loss_fn(g_fake, real_label)
+      g_loss.backward()
+      g_optim.step()
 
 
     print("Epoch", epoch, "D_loss=", d_loss.mean().cpu().data.numpy(), "G_loss=", g_loss.mean().cpu().data.numpy())
