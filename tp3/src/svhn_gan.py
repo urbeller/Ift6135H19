@@ -46,7 +46,7 @@ def compute_gp(device, D, x_real, x_fake, batch_size, lambda_f = 10):
   
   return gradient_penalty
 
-def train(device, D, G, train_loader, batch_size=128, latent_dim=100, epochs=10000, g_iters=10, d_iters = 30):
+def train(device, D, G, train_loader, batch_size=128, latent_dim=100, epochs=10000, g_iters=1, d_iters = 1):
 
   D.train()
   G.train()
@@ -79,7 +79,7 @@ def train(device, D, G, train_loader, batch_size=128, latent_dim=100, epochs=100
       d_fake = D(x_fake)
       d_real = D(x_real)
       gp_loss = compute_gp(device, D, x_real, x_fake, batch_size)
-      d_loss = -((loss_fn(d_fake, fake_label) + loss_fn(d_real, real_label) )/2 )
+      d_loss = (loss_fn(d_fake, fake_label) + loss_fn(d_real, real_label)
       d_loss.backward()
       d_optim.step()
 
