@@ -87,7 +87,7 @@ def train(device, D, G, train_loader, batch_size=128, latent_dim=100, epochs=100
       g_out = Variable(G(x_noise) , requires_grad=True)
 
       g_fake = D(g_out)
-      g_loss = loss_fn(g_fake, real_label)
+      g_loss = -loss_fn(g_fake, real_label)
       g_loss.backward()
       g_optim.step()
 
