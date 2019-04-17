@@ -51,8 +51,8 @@ def train(device, D, G, train_loader, batch_size=128, latent_dim=100, epochs=100
   D.train()
   G.train()
   
-  d_optim = torch.optim.Adam(D.parameters(), lr=0.0001)
-  g_optim = torch.optim.Adam(G.parameters(), lr=0.0001)
+  d_optim = torch.optim.Adam(D.parameters(),lr=2e-4, betas=(.5, .999))
+  g_optim = torch.optim.Adam(D.parameters(),lr=2e-4, betas=(.5, .999))
 
   loss_fn = torch.nn.BCELoss()
 
@@ -117,6 +117,6 @@ if __name__ == "__main__":
   D.to(device)
   G.to(device)
 
-  batch_size = 128
+  batch_size = 64
   train_data, valid_data, test_data = utils.get_data_loader("svhn", batch_size)
   train(device, D, G, train_data, batch_size=batch_size, latent_dim=latent_dim)
