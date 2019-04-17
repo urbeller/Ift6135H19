@@ -48,7 +48,7 @@ def train(device, model, train_loader, epochs=100):
       kl /= scaling_fact
       loss = bce +  kl
       """
-      bce = F.binary_cross_entropy(recons.view(batch_size, -1), X.view(batch_size, -1), reduction='sum')
+      bce = latent_loss(recons.view(batch_size, -1), X.view(batch_size, -1))
       kl = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
       loss = bce - kl
 
