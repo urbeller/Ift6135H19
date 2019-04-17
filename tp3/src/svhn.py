@@ -48,7 +48,8 @@ def train(device, model, train_loader, epochs=100):
       kl /= scaling_fact
       loss = bce +  kl
       """
-      bce = latent_loss(recons.view(batch_size, -1), X.view(batch_size, -1))
+      #bce = latent_loss(recons.view(batch_size, -1), X.view(batch_size, -1))
+      bce = latent_loss(recons, X)
       kl = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
       loss = bce + kl
 
@@ -98,4 +99,5 @@ if __name__ == "__main__":
 
     sample = vae.decode(sample).cpu()
     print(sample.shape)
+    print(sample.max())
     save_image(sample.data.view(n_samples, 3, 32, 32), 'results/sample.png', nrow= sqrt_n_samples )
