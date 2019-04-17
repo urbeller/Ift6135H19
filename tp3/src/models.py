@@ -80,7 +80,6 @@ class VAE(nn.Module):
       nn.ELU(),
 
       nn.ConvTranspose2d(8, image_channels, 3, 1, 1),
-      nn.ELU(),
       nn.Sigmoid()
     )
 
@@ -195,7 +194,7 @@ class Discriminator(nn.Module):
 
     self.fc = nn.Sequential(
                 nn.Linear(128 * 4 * 4, 1),
-                #nn.Sigmoid()
+                nn.Sigmoid()
             )
 
     utils.initialize_weights(self)
