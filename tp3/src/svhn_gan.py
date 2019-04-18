@@ -22,7 +22,6 @@ def generate_image(G, device, latent_dim, n_images, prefix):
 
   samples = G(noise)
   samples = samples.view(-1, 3, 32, 32)
-  #samples = samples.add(0.5)
   save_image(samples.data.view(n_images, 3, 32, 32).cpu(), 'results/sample-' + str(prefix) + '.png', nrow= 10 )
 
 def compute_gp(device, D, x_real, x_fake, batch_size):
@@ -59,7 +58,8 @@ def train(device, D, G, train_loader, batch_size=128, latent_dim=100, epochs=100
       x_real = Variable(X.to(device))
       
       # Optimize D
-      noise = Variable(torch.randn(batch_size, latent_dim)).to(device)
+      #noise = Variable(torch.randn(batch_size, latent_dim)).to(device)
+      noise = Variable(torch.rand(batch_size, latent_dim) * 2 - 1).to(device)
       x_fake = Variable(G(noise).to(device))
       d_fake = D(x_fake.detach())
       d_real = D(x_real)
@@ -82,7 +82,6 @@ def train(device, D, G, train_loader, batch_size=128, latent_dim=100, epochs=100
         g_loss.backward()
         g_optim.step()
 
-      print("GP=", gp)
     #if (idx + 1) % 99 == 0:
     print("Epoch", epoch, ", Step ", idx, "D_loss=",
         d_loss.mean().cpu().data.numpy(), "G_loss=", g_loss.mean().cpu().data.numpy())
