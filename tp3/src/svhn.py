@@ -32,7 +32,7 @@ def generate_good_samples(model, device, z_dim, n_samples):
       seq = seq + 1
       continue
 
-    save_image(sample.data.view(1, 3, 32, 32), 'results/sample-' + str(seq) + '.png' )
+    save_image(sample.data.view(1, 3, 32, 32), 'results/demo-' + str(seq) + '.png' )
     seq = seq + 1
 
     i = i + 1
@@ -102,6 +102,6 @@ if __name__ == "__main__":
     vae.eval()
     vae.to(device)
 
-    n_samples = 500
+    n_samples = 100
     generate_good_samples(vae, device, z_dim, n_samples)
 
