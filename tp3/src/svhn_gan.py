@@ -35,11 +35,6 @@ def compute_gp(device, D, x_real, x_fake, batch_size):
 
   ones = torch.ones(out_interp.size()).to(device)
 
-  """
-  gradients = grad(outputs=out_interp, inputs=interpolates,
-                              grad_outputs=ones,
-                              create_graph=True, retain_graph=True, only_inputs=True)[0].view(batch_size, -1)
-  """
   gradients = grad(outputs=out_interp.mean(), inputs=interpolates, create_graph=True, retain_graph=True)[0]
 
   gradients = gradients.view(gradients.size(0), -1)
@@ -55,10 +50,6 @@ def train(device, D, G, train_loader, batch_size=128, latent_dim=100, epochs=100
   d_optim = torch.optim.Adam(D.parameters(),lr=2e-4, betas=(.5, .999))
   g_optim = torch.optim.Adam(D.parameters(),lr=2e-4, betas=(.5, .999))
 
-  loss_fn = torch.nn.BCELoss()
-
-  one = torch.tensor(1.0).to(device)
-  mone = torch.tensor(-1.0).to(device)
   
   for epoch in range(epochs):
 
@@ -91,8 +82,10 @@ def train(device, D, G, train_loader, batch_size=128, latent_dim=100, epochs=100
         g_loss.backward()
         g_optim.step()
 
+      print("GP=", gp)
     #if (idx + 1) % 99 == 0:
-    print("Epoch", epoch, ", Step ", idx, "D_loss=", d_loss.mean().cpu().data.numpy(), "G_loss=", g_loss.mean().cpu().data.numpy())
+    print("Epoch", epoch, ", Step ", idx, "D_loss=",
+        d_loss.mean().cpu().data.numpy(), "G_loss=", g_loss.mean().cpu().data.numpy())
     generate_image(G, device, latent_dim, 100, step_d )
 
 if __name__ == "__main__":
