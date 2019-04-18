@@ -26,20 +26,24 @@ def generate_image(G, device, latent_dim, n_images, prefix):
   save_image(samples.data.view(n_images, 3, 32, 32).cpu(), 'results/sample-' + str(prefix) + '.png', nrow= 10 )
 
 def compute_gp(device, D, x_real, x_fake, batch_size):
-  sz1 = x_real.size(1)
-  sz2 = x_real.size(2)
-  sz3 = x_real.size(3)
-  alpha = torch.rand(batch_size, 1)
-  alpha = alpha.expand(batch_size, sz1 * sz2 * sz3).view(batch_size, sz1, sz2, sz3).to(device)
+  _alpha = torch.rand(batch_size, 1, device=device, requires_grad=True)
+  alpha = _alpha.expand(batch_size, x_real.nelement()/batch_size).contiguous().view(x_real.size())
 
-  interpolates = Variable(alpha * x_real + ((1.0 - alpha) * x_fake), requires_grad=True).to(device)
+  interpolates = alpha * x_real + (1.0 - alpha) * x_fake
 
   out_interp = D(interpolates)
 
   ones = torch.ones(out_interp.size()).to(device)
+
+  """
   gradients = grad(outputs=out_interp, inputs=interpolates,
                               grad_outputs=ones,
                               create_graph=True, retain_graph=True, only_inputs=True)[0].view(batch_size, -1)
+  """
+   gradients = autograd.grad(outputs=out_interp.mean(), 
+                              inputs=interpolates, 
+                              create_graph=True, retain_graph=True)[0]
+
   gradients = gradients.view(gradients.size(0), -1)
   gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean()
   
