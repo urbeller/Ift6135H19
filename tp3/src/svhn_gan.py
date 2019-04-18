@@ -40,9 +40,7 @@ def compute_gp(device, D, x_real, x_fake, batch_size):
                               grad_outputs=ones,
                               create_graph=True, retain_graph=True, only_inputs=True)[0].view(batch_size, -1)
   """
-   gradients = autograd.grad(outputs=out_interp.mean(), 
-                              inputs=interpolates, 
-                              create_graph=True, retain_graph=True)[0]
+  gradients = grad(outputs=out_interp.mean(), inputs=interpolates, create_graph=True, retain_graph=True)[0]
 
   gradients = gradients.view(gradients.size(0), -1)
   gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean()
