@@ -41,16 +41,14 @@ def train(device, model, train_loader, epochs=100):
 
       bce = latent_loss(recons.view(batch_size, -1), X.view(batch_size, -1))
       kl = -0.5 * torch.sum(1 + logvar - mu**2 - torch.exp(logvar))
-      kl /= scaling_fact
+      #kl /= scaling_fact
       loss = bce +  kl
       loss.backward()
       train_loss += loss.item()
       optim.step()
 
     print("Epoch: ", epoch, "Loss=", train_loss)
-    if train_loss < best_loss:
-      best_loss = train_loss
-      torch.save(vae.state_dict(), 'vae_model.pth')
+    torch.save(vae.state_dict(), 'vae_model.pth')
 
 if __name__ == "__main__":
   import argparse
