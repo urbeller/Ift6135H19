@@ -18,8 +18,7 @@ import utils
 
 
 def generate_image(G, device, latent_dim, n_images, prefix):
-  #noise = Variable(torch.randn(n_images, latent_dim) , requires_grad=False).to(device)
-  noise = Variable(torch.rand(batch_size, latent_dim) * 2 - 1).to(device)
+  noise = Variable(torch.randn(n_images, latent_dim) , requires_grad=False).to(device)
 
   samples = G(noise)
   samples = samples.view(-1, 3, 32, 32)
@@ -59,8 +58,7 @@ def train(device, D, G, train_loader, batch_size=128, latent_dim=100, epochs=100
       x_real = Variable(X.to(device))
       
       # Optimize D
-      #noise = Variable(torch.randn(batch_size, latent_dim)).to(device)
-      noise = Variable(torch.rand(batch_size, latent_dim) * 2 - 1).to(device)
+      noise = Variable(torch.randn(batch_size, latent_dim)).to(device)
       x_fake = Variable(G(noise).to(device))
       d_fake = D(x_fake.detach())
       d_real = D(x_real)
@@ -73,8 +71,7 @@ def train(device, D, G, train_loader, batch_size=128, latent_dim=100, epochs=100
 
       # Optimize G after 'd_iters' of D
       if step_d % d_iters == 0:
-        #noise = Variable(torch.randn(batch_size, latent_dim)).to(device)
-        noise = Variable(torch.rand(batch_size, latent_dim) * 2 - 1).to(device)
+        noise = Variable(torch.randn(batch_size, latent_dim)).to(device)
         x_fake = Variable(G(noise).to(device))
         d_fake = D(x_fake)
         g_loss = -d_fake.mean()
