@@ -27,7 +27,7 @@ def generate_image(G, device, latent_dim, n_images, prefix):
 
 def compute_gp(device, D, x_real, x_fake, batch_size):
   _alpha = torch.rand(batch_size, 1, device=device, requires_grad=True)
-  alpha = _alpha.expand(batch_size, x_real.nelement()/int(batch_size)).contiguous().view(x_real.size())
+  alpha = _alpha.expand(batch_size, x_real.nelement()//batch_size).contiguous().view(x_real.size())
 
   interpolates = alpha * x_real + (1.0 - alpha) * x_fake
 
