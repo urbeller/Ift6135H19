@@ -90,8 +90,8 @@ def train(device, D, G, train_loader, batch_size=128, latent_dim=100, epochs=100
         g_optim.step()
 
     #if (idx + 1) % 99 == 0:
-      print("Epoch", epoch, ", Step ", idx, "D_loss=", d_loss.mean().cpu().data.numpy(), "G_loss=", g_loss.mean().cpu().data.numpy())
-      generate_image(G, device, latent_dim, 100, step_d )
+    print("Epoch", epoch, ", Step ", idx, "D_loss=", d_loss.mean().cpu().data.numpy(), "G_loss=", g_loss.mean().cpu().data.numpy())
+    generate_image(G, device, latent_dim, 100, step_d )
 
 if __name__ == "__main__":
   import argparse
