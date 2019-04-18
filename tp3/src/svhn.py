@@ -17,7 +17,7 @@ import utils
 
 def train(device, model, train_loader, epochs=100):
   
-  latent_loss = nn.MSELoss()
+  latent_loss = nn.MSELoss(size_average=False)
 
   utils.initialize_weights(model)
   model.train()
@@ -39,7 +39,7 @@ def train(device, model, train_loader, epochs=100):
       # Compute loss
       scaling_fact = X.shape[0] * X.shape[1] * X.shape[2] * X.shape[3]
 
-      bce = latent_loss(recons.view(batch_size, -1), X.view(batch_size, -1), size_average=False)
+      bce = latent_loss(recons.view(batch_size, -1), X.view(batch_size, -1))
       kl = -0.5 * torch.sum(1 + logvar - mu**2 - torch.exp(logvar))
       kl /= scaling_fact
       loss = bce +  kl
