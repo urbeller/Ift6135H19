@@ -22,16 +22,15 @@ def generate_image(G, device, latent_dim, n_images, prefix):
 
   samples = G(noise)
   samples = samples.view(-1, 3, 32, 32)
-  samples = samples.add(0.5)
+  #samples = samples.add(0.5)
   save_image(samples.data.view(n_images, 3, 32, 32).cpu(), 'results/sample-' + str(prefix) + '.png', nrow= 10 )
 
-def compute_gp(device, D, x_real, x_fake, batch_size, lambda_f = 10):
+def compute_gp(device, D, x_real, x_fake, batch_size):
   sz1 = x_real.size(1)
   sz2 = x_real.size(2)
   sz3 = x_real.size(3)
   alpha = torch.rand(batch_size, 1)
-  alpha = alpha.expand(batch_size, sz1 * sz2 * sz3).view(batch_size, sz1, sz2, sz3)
-  alpha = alpha.to(device)
+  alpha = alpha.expand(batch_size, sz1 * sz2 * sz3).view(batch_size, sz1, sz2, sz3).to(device)
 
   interpolates = Variable(alpha * x_real + ((1.0 - alpha) * x_fake), requires_grad=True).to(device)
 
@@ -40,13 +39,13 @@ def compute_gp(device, D, x_real, x_fake, batch_size, lambda_f = 10):
   ones = torch.ones(out_interp.size()).to(device)
   gradients = grad(outputs=out_interp, inputs=interpolates,
                               grad_outputs=ones,
-                              create_graph=True, retain_graph=True, only_inputs=True)[0]
+                              create_graph=True, retain_graph=True, only_inputs=True)[0].view(batch_size, -1)
   gradients = gradients.view(gradients.size(0), -1)
-  gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean() * lambda_f
+  gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean()
   
   return gradient_penalty
 
-def train(device, D, G, train_loader, batch_size=128, latent_dim=100, epochs=10000, g_iters=1, d_iters = 1):
+def train(device, D, G, train_loader, batch_size=128, latent_dim=100, epochs=10000, g_iters=1, d_iters = 5):
 
   D.train()
   G.train()
@@ -58,42 +57,41 @@ def train(device, D, G, train_loader, batch_size=128, latent_dim=100, epochs=100
 
   one = torch.tensor(1.0).to(device)
   mone = torch.tensor(-1.0).to(device)
-
-  real_label = Variable(torch.Tensor(batch_size, 1).fill_(1.0), requires_grad=False).to(device)
-  fake_label = Variable(torch.Tensor(batch_size, 1).fill_(0.0), requires_grad=False).to(device)
-
+  
   for epoch in range(epochs):
 
-    for idx, (X,Y) in enumerate(train_loader):
-      D.zero_grad()
-  
-      if X.shape[0] != batch_size:
-        break
-
+    for idx, (X,_) in enumerate(train_loader):
+      batch_size = X.shape[0] 
+      step_d = epoch * batch_size + idx + 1
       x_real = Variable(X.to(device))
       
+      # Optimize D
       noise = Variable(torch.randn(batch_size, latent_dim)).to(device)
       x_fake = Variable(G(noise).to(device))
-      d_fake = D(x_fake)
+      d_fake = D(x_fake.detach())
       d_real = D(x_real)
-      gp_loss = compute_gp(device, D, x_real, x_fake, batch_size)
-      d_loss = loss_fn(d_fake, fake_label) + loss_fn(d_real, real_label)
+      gp = compute_gp(device, D, x_real, x_fake, batch_size)
+      d_loss = d_fake.mean() - d_real.mean() + 10.0 * gp
+      D.zero_grad()
       d_loss.backward()
       d_optim.step()
 
 
-      G.zero_grad()
-      x_noise = Variable(torch.randn(batch_size, latent_dim)).to(device)
-      g_out = Variable(G(x_noise) , requires_grad=True)
+      # Optimize G after 'd_iters' of D
+      if step_d % d_iters == 0:
+        noise = Variable(torch.randn(batch_size, latent_dim)).to(device)
+        x_fake = Variable(G(noise).to(device))
+        d_fake = D(x_fake)
+        g_loss = -d_fake.mean()
+        
+        G.zero_grad()
+        D.zero_grad()
+        g_loss.backward()
+        g_optim.step()
 
-      g_fake = D(g_out)
-      g_loss = loss_fn(g_fake, real_label)
-      g_loss.backward()
-      g_optim.step()
-
-
-    print("Epoch", epoch, "D_loss=", d_loss.mean().cpu().data.numpy(), "G_loss=", g_loss.mean().cpu().data.numpy())
-    generate_image(G, device, latent_dim, 100, epoch )
+      if (idx + 1) % 99 == 0:
+        print("Epoch", epoch, ", Step ", idx, "D_loss=", d_loss.mean().cpu().data.numpy(), "G_loss=", g_loss.mean().cpu().data.numpy())
+        generate_image(G, device, latent_dim, 100, step_d )
 
 if __name__ == "__main__":
   import argparse

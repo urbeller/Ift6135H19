@@ -195,7 +195,7 @@ class Discriminator(nn.Module):
 
     self.fc = nn.Sequential(
                 nn.Linear(128 * 4 * 4, 1),
-                nn.Sigmoid()
+               # nn.Sigmoid()
             )
 
     utils.initialize_weights(self)

@@ -15,6 +15,29 @@ import numpy as np
 import models
 import utils
 
+# Generate good images (not empty) and keep track
+# of the iteration number for reproduc.
+# Used imagemagick to make a grid:
+# montage results/sample-*png -tile 20x25 -geometry 32x32+1+1   out.png
+def generate_good_samples(model, device, z_dim, n_samples):
+  torch.manual_seed(1977)
+  
+  i = 0
+  seq = 0
+  while i < n_samples:
+    noise = Variable(torch.randn(1, z_dim) ).to(device)
+    sample = vae.decode(noise).cpu()
+    
+    if sample.var() < 0.02:
+      seq = seq + 1
+      continue
+
+    save_image(sample.data.view(1, 3, 32, 32), 'results/sample-' + str(seq) + '.png' )
+    seq = seq + 1
+
+    i = i + 1
+
+
 def train(device, model, train_loader, epochs=100):
   
   latent_loss = nn.MSELoss(size_average=False)
@@ -75,16 +98,10 @@ if __name__ == "__main__":
     torch.save(vae.state_dict(), 'vae_model_final.pth')
 
   else:
-    sqrt_n_samples = 25
-    n_samples = sqrt_n_samples * sqrt_n_samples
     vae.load_state_dict(torch.load( args.use_model , map_location='cpu') )
     vae.eval()
     vae.to(device)
 
-    # Get some samples
-    sample = Variable(torch.randn(n_samples, z_dim) )
-    sample.to(device)
+    n_samples = 500
+    generate_good_samples(vae, device, z_dim, n_samples)
 
-    sample = vae.decode(sample).cpu()
-    print(sample.shape)
-    save_image(sample.data.view(n_samples, 3, 32, 32), 'results/sample.png', nrow= sqrt_n_samples )
